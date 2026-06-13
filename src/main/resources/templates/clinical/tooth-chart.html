@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Sơ đồ răng', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tiếp đón và khám bệnh / Sơ đồ răng</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Sơ đồ răng FDI 32</h2>
+            <p class="page-sub">Bệnh nhân: <strong th:text="${patient.fullName}"></strong>
+                (<span th:text="${patient.patientCode}"></span>)</p>
+        </div>
+        <div th:if="${sessionId != null}">
+            <a th:href="@{/clinical/examination(sessionId=${sessionId})}" class="btn btn-secondary">Quay lại phiên khám</a>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <div class="dental-chart">
+            <div class="dental-quadrant">
+                <div class="dental-quadrant-title">Hàm trên phải (18 - 11)</div>
+                <div class="dental-row">
+                    <a th:each="t : ${#numbers.sequence(18, 11, -1)}"
+                       th:href="@{/clinical/tooth-chart(patientId=${patient.id}, sessionId=${sessionId}, toothNumber=${t})}"
+                       class="tooth"
+                       th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                       th:text="${t}"
+                       th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                </div>
+            </div>
+            <div class="dental-quadrant">
+                <div class="dental-quadrant-title">Hàm trên trái (21 - 28)</div>
+                <div class="dental-row">
+                    <a th:each="t : ${#numbers.sequence(21, 28)}"
+                       th:href="@{/clinical/tooth-chart(patientId=${patient.id}, sessionId=${sessionId}, toothNumber=${t})}"
+                       class="tooth"
+                       th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                       th:text="${t}"
+                       th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                </div>
+            </div>
+            <div class="dental-quadrant">
+                <div class="dental-quadrant-title">Hàm dưới phải (48 - 41)</div>
+                <div class="dental-row">
+                    <a th:each="t : ${#numbers.sequence(48, 41, -1)}"
+                       th:href="@{/clinical/tooth-chart(patientId=${patient.id}, sessionId=${sessionId}, toothNumber=${t})}"
+                       class="tooth"
+                       th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                       th:text="${t}"
+                       th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                </div>
+            </div>
+            <div class="dental-quadrant">
+                <div class="dental-quadrant-title">Hàm dưới trái (31 - 38)</div>
+                <div class="dental-row">
+                    <a th:each="t : ${#numbers.sequence(31, 38)}"
+                       th:href="@{/clinical/tooth-chart(patientId=${patient.id}, sessionId=${sessionId}, toothNumber=${t})}"
+                       class="tooth"
+                       th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                       th:text="${t}"
+                       th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="tooth-legend">
+            <div class="tooth-legend-item" th:each="s : ${toothStatuses}">
+                <span class="tooth-legend-swatch" th:classappend="${s.colorClass}"></span>
+                <span th:text="${s.label}"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${selectedTooth != null}" style="margin-bottom:var(--space-4);">
+        <div class="page-header" style="margin-bottom:var(--space-2);">
+            <h3 class="card-section-title">Răng số <span th:text="${selectedTooth}"></span></h3>
+        </div>
+
+        <form method="post" th:action="@{/clinical/tooth-chart}" th:object="${toothForm}"
+              th:if="${sessionId != null}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="patientId" th:value="${patient.id}"/>
+            <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+            <input type="hidden" name="toothNumber" th:value="${selectedTooth}"/>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select name="status" class="form-control" required>
+                        <option th:each="s : ${toothStatuses}" th:value="${s}" th:text="${s.label}"
+                                th:selected="${chart.containsKey(selectedTooth) and chart.get(selectedTooth).status == s}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Chẩn đoán</label>
+                    <input type="text" name="diagnosis" class="form-control" maxlength="255"
+                           th:value="${chart.containsKey(selectedTooth) ? chart.get(selectedTooth).diagnosis : ''}"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea name="note" class="form-control" rows="2" maxlength="255"
+                          th:text="${chart.containsKey(selectedTooth) ? chart.get(selectedTooth).note : ''}"></textarea>
+            </div>
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary">Lưu trạng thái răng</button>
+            </div>
+        </form>
+
+        <p th:if="${sessionId == null}" class="page-sub">
+            Chỉ có thể cập nhật trạng thái răng trong một phiên khám đang diễn ra.
+        </p>
+
+        <div style="margin-top:var(--space-4);" th:if="${not #lists.isEmpty(history)}">
+            <h4 class="card-section-title">Lịch sử thay đổi</h4>
+            <ul class="timeline">
+                <li th:each="h : ${history}">
+                    <div class="timeline-time" th:text="${#temporals.format(h.updatedAt, 'dd/MM/yyyy HH:mm')}"></div>
+                    <div class="timeline-content">
+                        <span th:text="${h.oldStatus != null ? h.oldStatus.label : 'Chưa có'}"></span>
+                        →
+                        <strong th:text="${h.newStatus.label}"></strong>
+                        <span th:if="${h.diagnosis}"> - Chẩn đoán: <span th:text="${h.diagnosis}"></span></span>
+                        <span th:if="${h.note}"> - Ghi chú: <span th:text="${h.note}"></span></span>
+                        <span class="text-muted" th:if="${h.updatedBy}"> (bởi <span th:text="${h.updatedBy}"></span>)</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script></script>
+
+</th:block>
+</body>
+</html>

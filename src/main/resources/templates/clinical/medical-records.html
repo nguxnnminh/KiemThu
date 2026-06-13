@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Hồ sơ bệnh án', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tiếp đón và khám bệnh / Hồ sơ bệnh án</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Hồ sơ bệnh án <span class="count-chip" th:text="${#lists.size(records)} + ' phiên khám'">0</span></h2>
+            <p class="page-sub">Tổng hợp thông tin bệnh nhân, chẩn đoán, kế hoạch điều trị và ghi chú bác sĩ từ các phiên khám.</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/clinical/medical-records}" class="toolbar">
+            <div class="filters">
+                <input type="text" name="keyword" class="form-control"
+                       placeholder="Tìm theo mã phiên, mã BN, tên, SĐT..."
+                       th:value="${keyword}" style="min-width:280px;"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Tìm kiếm</button>
+                <a th:href="@{/clinical/medical-records}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Phiên khám</th>
+                <th>Bệnh nhân</th>
+                <th>Thông tin</th>
+                <th>Bác sĩ</th>
+                <th>Triệu chứng</th>
+                <th>Chẩn đoán</th>
+                <th>Kế hoạch điều trị</th>
+                <th>Ghi chú bác sĩ</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${records}">
+                <td>
+                    <strong th:text="${s.sessionCode}"></strong><br/>
+                    <span class="text-muted" th:text="${#temporals.format(s.examinationDate, 'dd/MM/yyyy')}"></span><br/>
+                    <span class="text-muted" th:text="${s.medicalRecord.recordCode}"></span>
+                </td>
+                <td>
+                    <strong th:text="${s.patient.fullName}"></strong><br/>
+                    <span class="text-muted" th:text="${s.patient.patientCode}"></span>
+                </td>
+                <td>
+                    <span th:text="${s.patient.gender != null ? s.patient.gender.label : '-'}"></span><br/>
+                    <span th:text="${s.patient.dateOfBirth != null ? #temporals.format(s.patient.dateOfBirth, 'dd/MM/yyyy') : '-'}"></span><br/>
+                    <span th:text="${s.patient.phone ?: '-'}"></span>
+                </td>
+                <td th:text="${s.doctor.fullName}"></td>
+                <td th:text="${s.symptom ?: '-'}"></td>
+                <td th:text="${s.diagnosis ?: '-'}"></td>
+                <td th:text="${s.treatmentPlan ?: '-'}"></td>
+                <td th:text="${s.doctorNote ?: '-'}"></td>
+                <td>
+                    <a th:href="@{/clinical/examination(sessionId=${s.id})}" class="btn btn-secondary" style="padding:4px 12px;">Xem phiên</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(records)}">
+                <td colspan="9">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Chưa có hồ sơ bệnh án phù hợp.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script></script>
+
+</th:block>
+</body>
+</html>

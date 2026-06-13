@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Quản lý ngày nghỉ', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Quản lý lịch khám / Ngày nghỉ</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Quản lý ngày nghỉ <span class="count-chip" th:text="${holidays.totalElements} + ' ngày nghỉ'">0</span></h2>
+            <p class="page-sub">Khai báo các ngày nghỉ lễ, ngày phòng khám đóng cửa hoặc bảo trì.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-modal-target="addHolidayModal" data-modal-title="Thêm ngày nghỉ">
+            + Thêm ngày nghỉ
+        </button>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/schedule/holidays}" class="toolbar">
+            <div class="filters">
+                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã, tên ngày nghỉ..."
+                       th:value="${keyword}" style="min-width:220px;"/>
+                <select name="holidayType" class="form-control">
+                    <option value="">-- Tất cả loại --</option>
+                    <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t.label}"
+                            th:selected="${holidayTypeFilter == t}"></option>
+                </select>
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${statusFilter == s}"></option>
+                </select>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Tìm kiếm</button>
+                <a th:href="@{/schedule/holidays}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã ngày nghỉ</th>
+                <th>Tên</th>
+                <th>Từ ngày</th>
+                <th>Đến ngày</th>
+                <th>Loại</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="h : ${holidays.content}">
+                <td th:text="${h.holidayCode}"></td>
+                <td th:text="${h.name}"></td>
+                <td th:text="${#temporals.format(h.startDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${#temporals.format(h.endDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${h.holidayType.label}"></td>
+                <td th:text="${h.description} ?: '-'"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${h.status.name() == 'ACTIVE'} ? 'badge-active' : 'badge-inactive'"
+                          th:text="${h.status.label}"></span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button type="button" class="btn-icon" title="Sửa ngày nghỉ"
+                                th:attr="data-modal-target='editHolidayModal-' + ${h.id}, data-modal-title='Sửa ngày nghỉ: ' + ${h.name}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+
+                        <button th:if="${h.status.name() == 'ACTIVE'}" type="button" class="btn-icon btn-icon-danger" title="Ngừng sử dụng"
+                                th:attr="data-confirm-form='deactivateHolidayForm-' + ${h.id}, data-confirm-title='Ngừng sử dụng ngày nghỉ', data-confirm-message='Bạn có chắc chắn muốn ngừng sử dụng ngày nghỉ ' + ${h.name} + '?'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        </button>
+                        <form th:id="'deactivateHolidayForm-' + ${h.id}" method="post"
+                              th:action="@{/schedule/holidays/{id}/deactivate(id=${h.id})}" style="display:none">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        </form>
+
+                        <button th:if="${h.status.name() != 'ACTIVE'}" type="button" class="btn-icon" title="Kích hoạt lại"
+                                th:attr="data-confirm-form='activateHolidayForm-' + ${h.id}, data-confirm-title='Kích hoạt lại ngày nghỉ', data-confirm-message='Bạn có chắc chắn muốn kích hoạt lại ngày nghỉ ' + ${h.name} + '?'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <form th:id="'activateHolidayForm-' + ${h.id}" method="post"
+                              th:action="@{/schedule/holidays/{id}/activate(id=${h.id})}" style="display:none">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${holidays.empty}">
+                <td colspan="8">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không tìm thấy ngày nghỉ nào phù hợp.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${holidays.totalPages > 1}">
+        <a th:each="p : ${#numbers.sequence(0, holidays.totalPages - 1)}"
+           th:href="@{/schedule/holidays(page=${p}, keyword=${keyword}, holidayType=${holidayTypeFilter}, status=${statusFilter})}"
+           th:text="${p + 1}"
+           th:classappend="${p == holidays.number} ? 'active' : ''"></a>
+    </div>
+
+    <!-- ===================== Modal: Them ngay nghi ===================== -->
+    <template id="addHolidayModal" data-modal-title="Thêm ngày nghỉ">
+        <form method="post" class="modal-form" th:action="@{/schedule/holidays}" th:object="${holidayForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Tên ngày nghỉ <span style="color:var(--error)">*</span></label>
+                <input type="text" name="name" class="form-control" th:value="*{name}" required/>
+            </div>
+            <div class="form-group">
+                <label>Từ ngày <span style="color:var(--error)">*</span></label>
+                <input type="date" name="startDate" class="form-control" th:value="*{startDate}" required/>
+            </div>
+            <div class="form-group">
+                <label>Đến ngày <span style="color:var(--error)">*</span></label>
+                <input type="date" name="endDate" class="form-control" th:value="*{endDate}" required/>
+            </div>
+            <div class="form-group">
+                <label>Loại ngày nghỉ <span style="color:var(--error)">*</span></label>
+                <select name="holidayType" class="form-control" required>
+                    <option value="">-- Chọn loại --</option>
+                    <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t.label}"
+                            th:selected="*{holidayType} == ${t}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Mô tả</label>
+                <textarea name="description" class="form-control" th:text="*{description}"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="*{status} == ${s}"></option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </template>
+
+    <!-- ===================== Modal: Sua ngay nghi ===================== -->
+    <template th:each="h : ${holidays.content}" th:id="'editHolidayModal-' + ${h.id}"
+              th:data-modal-title="'Sửa ngày nghỉ: ' + ${h.name}"
+              th:with="ef=${editForms.get('editHolidayForm-' + h.id)}">
+        <form method="post" class="modal-form" th:action="@{/schedule/holidays/{id}(id=${h.id})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Mã ngày nghỉ</label>
+                <input type="text" class="form-control" th:value="${h.holidayCode}" disabled/>
+            </div>
+            <div class="form-group">
+                <label>Tên ngày nghỉ <span style="color:var(--error)">*</span></label>
+                <input type="text" name="name" class="form-control"
+                       th:value="${ef != null ? ef.name : h.name}" required/>
+            </div>
+            <div class="form-group">
+                <label>Từ ngày <span style="color:var(--error)">*</span></label>
+                <input type="date" name="startDate" class="form-control"
+                       th:value="${ef != null ? ef.startDate : h.startDate}" required/>
+            </div>
+            <div class="form-group">
+                <label>Đến ngày <span style="color:var(--error)">*</span></label>
+                <input type="date" name="endDate" class="form-control"
+                       th:value="${ef != null ? ef.endDate : h.endDate}" required/>
+            </div>
+            <div class="form-group">
+                <label>Loại ngày nghỉ <span style="color:var(--error)">*</span></label>
+                <select name="holidayType" class="form-control" required>
+                    <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t.label}"
+                            th:selected="${(ef != null ? ef.holidayType : h.holidayType) == t}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Mô tả</label>
+                <textarea name="description" class="form-control"
+                          th:text="${ef != null ? ef.description : h.description}"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${(ef != null ? ef.status : h.status) == s}"></option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </template>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var reopenModal = /*[[${reopenModal}]]*/ null;
+    if (reopenModal) {
+        window.__reopenModal = reopenModal;
+    }
+    /*]]>*/
+</script>
+
+</th:block>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Báo cáo lương tháng', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tính lương bác sĩ / Báo cáo lương tháng</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Báo cáo lương tất cả bác sĩ theo tháng</h2>
+            <p class="page-sub" th:text="|Tháng ${month}/${year}|"></p>
+        </div>
+        <a class="btn btn-secondary" th:href="@{/payroll/reports/monthly/export(year=${year}, month=${month})}">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Xuất Excel
+        </a>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/payroll/reports/monthly}" class="toolbar">
+            <div class="filters">
+                <input type="number" name="year" class="form-control" placeholder="Năm" min="2000" max="2100"
+                       th:value="${year}" style="max-width:120px;"/>
+                <input type="number" name="month" class="form-control" placeholder="Tháng" min="1" max="12"
+                       th:value="${month}" style="max-width:100px;"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Xem báo cáo</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPI row -->
+    <div class="card-stats" style="margin-bottom:var(--space-4);">
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div>
+                <div class="card-stat-value"
+                     th:text="${#numbers.formatDecimal(#aggregates.sum(slips.![totalSalary]), 0, 'COMMA', 0, 'POINT') + ' đ'}"
+                     th:if="${!#lists.isEmpty(slips)}">0 đ</div>
+                <div class="card-stat-value" th:if="${#lists.isEmpty(slips)}">0 đ</div>
+                <div class="card-stat-label">Tổng lương chi trả</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${#lists.size(slips)}">0</div>
+                <div class="card-stat-label">Số phiếu lương</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div>
+                <div class="card-stat-value"
+                     th:text="${#lists.size(slips.?[status.name() == 'APPROVED'])}">0</div>
+                <div class="card-stat-label">Đã duyệt</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bieu do luong theo bac si -->
+    <div class="card chart-card" style="margin-bottom:var(--space-4);" th:if="${!#lists.isEmpty(slips)}">
+        <h3 class="card-section-title">Lương theo bác sĩ</h3>
+        <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
+    </div>
+
+    <div class="card table-responsive">
+        <h3 class="card-section-title">Chi tiết phiếu lương</h3>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã phiếu</th>
+                <th>Bác sĩ</th>
+                <th>Mã bác sĩ</th>
+                <th class="num">Tổng lương (đ)</th>
+                <th>Trạng thái</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${slips}">
+                <td th:text="${s.slipCode}"></td>
+                <td th:text="${s.doctor.fullName}"></td>
+                <td th:text="${s.doctor.employeeCode}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${s.status.name() == 'APPROVED'} ? 'badge-active' : (${s.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-pending')"
+                          th:text="${s.status.label}"></span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(slips)}">
+                <td colspan="5">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không có phiếu lương nào trong tháng này.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script th:inline="javascript" th:if="${!#lists.isEmpty(slips)}">
+    /*<![CDATA[*/
+    var chartLabels = /*[[${slips.![doctor.fullName]}]]*/ [];
+    var chartValues = /*[[${slips.![totalSalary]}]]*/ [];
+    /*]]>*/
+    (function () {
+        var el = document.getElementById('salaryChart');
+        if (!el || !chartLabels.length) return;
+        function draw() {
+            new Chart(el, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Tổng lương (đ)',
+                        data: chartValues,
+                        backgroundColor: 'rgba(13, 148, 136, 0.55)',
+                        borderColor: '#0d9488',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: function (v) { return new Intl.NumberFormat('vi-VN').format(v); } } }
+                    }
+                }
+            });
+        }
+        if (window.Chart) { draw(); return; }
+        var sc = document.createElement('script');
+        sc.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+        sc.onload = draw;
+        document.head.appendChild(sc);
+    })();
+</script>
+</th:block>
+</body>
+</html>

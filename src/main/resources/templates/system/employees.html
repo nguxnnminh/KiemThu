@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Quản lý nhân viên', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Quản lý hệ thống / Quản lý nhân viên</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Hồ sơ nhân viên</h2>
+            <p class="page-sub">Trang này lưu thông tin nhân sự như chức vụ, chuyên khoa, học vị, liên hệ và trạng thái làm việc. Tài khoản đăng nhập nằm ở mục Người dùng &amp; phân quyền.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-modal-target="addEmployeeModal" data-modal-title="Thêm nhân viên">
+            + Thêm nhân viên
+        </button>
+    </div>
+
+    <div class="card-stats" style="margin-bottom:var(--space-4);">
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.total()}">0</div>
+                <div class="card-stat-label">Tổng nhân viên</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.active()}">0</div>
+                <div class="card-stat-label">Đang hoạt động</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.doctors()}">0</div>
+                <div class="card-stat-label">Bác sĩ</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v1.66"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.receptionists()}">0</div>
+                <div class="card-stat-label">Lễ tân</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/system/employees}" class="toolbar">
+            <div class="filters">
+                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo tên, mã, SĐT, email..."
+                       th:value="${keyword}" style="min-width:220px;"/>
+                <select name="position" class="form-control">
+                    <option value="">-- Tất cả chức vụ --</option>
+                    <option th:each="p : ${positions}" th:value="${p}" th:text="${p.label}"
+                            th:selected="${positionFilter == p}"></option>
+                </select>
+                <select name="degree" class="form-control">
+                    <option value="">-- Tất cả học vị --</option>
+                    <option th:each="d : ${degrees}" th:value="${d}" th:text="${d.label}"
+                            th:selected="${degreeFilter == d}"></option>
+                </select>
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${statusFilter == s}"></option>
+                </select>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Tìm kiếm</button>
+                <a th:href="@{/system/employees}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã nhân viên</th>
+                <th>Họ tên</th>
+                <th>Chức vụ</th>
+                <th>Chuyên khoa</th>
+                <th>Học vị</th>
+                <th>SĐT</th>
+                <th>Email</th>
+                <th>Trạng thái</th>
+                <th>Ngày vào làm</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="emp : ${employees.content}">
+                <td th:text="${emp.employeeCode}"></td>
+                <td th:text="${emp.fullName}"></td>
+                <td th:text="${emp.position.label}"></td>
+                <td th:text="${emp.specialty} ?: '-'"></td>
+                <td th:text="${emp.degree != null ? emp.degree.label : '-'}"></td>
+                <td th:text="${emp.phone} ?: '-'"></td>
+                <td th:text="${emp.email} ?: '-'"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${emp.status.name() == 'ACTIVE'} ? 'badge-active' : (${emp.status.name() == 'SUSPENDED'} ? 'badge-suspended' : 'badge-inactive')"
+                          th:text="${emp.status.label}"></span>
+                </td>
+                <td th:text="${emp.hireDate != null ? #temporals.format(emp.hireDate, 'dd/MM/yyyy') : '-'}"></td>
+                <td>
+                    <div class="action-buttons">
+                        <button type="button" class="btn-icon" title="Sửa nhân viên"
+                                th:attr="data-modal-target='editEmployeeModal-' + ${emp.id}, data-modal-title='Sửa nhân viên: ' + ${emp.fullName}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+
+                        <button th:if="${emp.status.name() == 'ACTIVE'}" type="button" class="btn-icon" title="Tạm khóa nhân viên"
+                                th:attr="data-modal-target='suspendEmployeeModal-' + ${emp.id}, data-modal-title='Tạm khóa nhân viên'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                        </button>
+
+                        <button th:if="${emp.status.name() != 'ACTIVE'}" type="button" class="btn-icon" title="Kích hoạt lại"
+                                th:attr="data-confirm-form='reactivateForm-' + ${emp.id}, data-confirm-title='Kích hoạt lại nhân viên', data-confirm-message='Bạn có chắc chắn muốn kích hoạt lại nhân viên ' + ${emp.fullName} + '?'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <form th:id="'reactivateForm-' + ${emp.id}" method="post"
+                              th:action="@{/system/employees/{id}/reactivate(id=${emp.id})}" style="display:none">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        </form>
+
+                        <button th:if="${emp.status.name() != 'INACTIVE'}" type="button" class="btn-icon btn-icon-danger" title="Cho nghỉ việc"
+                                th:attr="data-modal-target='deactivateEmployeeModal-' + ${emp.id}, data-modal-title='Cho nhân viên nghỉ việc'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${employees.empty}">
+                <td colspan="10">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không tìm thấy nhân viên nào phù hợp.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${employees.totalPages > 1}">
+        <a th:each="p : ${#numbers.sequence(0, employees.totalPages - 1)}"
+           th:href="@{/system/employees(page=${p}, keyword=${keyword}, position=${positionFilter}, status=${statusFilter}, degree=${degreeFilter})}"
+           th:text="${p + 1}"
+           th:classappend="${p == employees.number} ? 'active' : ''"></a>
+    </div>
+
+    <!-- ===================== Modal: Them nhan vien ===================== -->
+    <template id="addEmployeeModal" data-modal-title="Thêm nhân viên">
+        <form method="post" class="modal-form" th:action="@{/system/employees}" th:object="${employeeForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Họ tên <span style="color:var(--error)">*</span></label>
+                <input type="text" name="fullName" class="form-control" th:value="*{fullName}" required/>
+            </div>
+            <div class="form-group">
+                <label>Ngày sinh</label>
+                <input type="date" name="dateOfBirth" class="form-control" th:value="*{dateOfBirth}"/>
+                <small class="text-muted">Nhân viên phải đủ 22 tuổi tại thời điểm vào làm.</small>
+            </div>
+            <div class="form-group">
+                <label>Giới tính</label>
+                <select name="gender" class="form-control">
+                    <option value="">-- Chọn giới tính --</option>
+                    <option th:each="g : ${genders}" th:value="${g}" th:text="${g.label}"
+                            th:selected="*{gender} == ${g}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" name="phone" class="form-control" th:value="*{phone}" placeholder="VD: 0901234567"/>
+                <small class="text-muted">Gồm 10 chữ số, bắt đầu bằng số 0.</small>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" th:value="*{email}"/>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ</label>
+                <input type="text" name="address" class="form-control" th:value="*{address}"/>
+            </div>
+            <div class="form-group">
+                <label>Chức vụ <span style="color:var(--error)">*</span></label>
+                <select name="position" class="form-control" required>
+                    <option value="">-- Chọn chức vụ --</option>
+                    <option th:each="p : ${positions}" th:value="${p}" th:text="${p.label}"
+                            th:selected="*{position} == ${p}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Chuyên khoa</label>
+                <input type="text" name="specialty" class="form-control" th:value="*{specialty}" placeholder="Áp dụng cho bác sĩ"/>
+            </div>
+            <div class="form-group">
+                <label>Học vị</label>
+                <select name="degree" class="form-control">
+                    <option value="">-- Không có --</option>
+                    <option th:each="d : ${degrees}" th:value="${d}" th:text="${d.label}"
+                            th:selected="*{degree} == ${d}"></option>
+                </select>
+                <small class="text-muted">Bác sĩ bắt buộc phải có chuyên khoa và học vị.</small>
+            </div>
+            <div class="form-group">
+                <label>Nơi công tác</label>
+                <input type="text" name="workplace" class="form-control" th:value="*{workplace}"/>
+            </div>
+            <div class="form-group">
+                <label>Ngày vào làm</label>
+                <input type="date" name="hireDate" class="form-control" th:value="*{hireDate}"/>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="*{status} == ${s}"></option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </template>
+
+    <!-- ===================== Modal: Sua nhan vien (theo tung dong) ===================== -->
+    <template th:each="emp : ${employees.content}" th:id="'editEmployeeModal-' + ${emp.id}"
+              th:data-modal-title="'Sửa nhân viên: ' + ${emp.fullName}"
+              th:with="ef=${editForms.get('editEmployeeForm-' + emp.id)}">
+        <form method="post" class="modal-form" th:action="@{/system/employees/{id}(id=${emp.id})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Mã nhân viên</label>
+                <input type="text" class="form-control" th:value="${emp.employeeCode}" disabled/>
+            </div>
+            <div class="form-group">
+                <label>Họ tên <span style="color:var(--error)">*</span></label>
+                <input type="text" name="fullName" class="form-control"
+                       th:value="${ef != null ? ef.fullName : emp.fullName}" required/>
+            </div>
+            <div class="form-group">
+                <label>Ngày sinh</label>
+                <input type="date" name="dateOfBirth" class="form-control"
+                       th:value="${ef != null ? ef.dateOfBirth : emp.dateOfBirth}"/>
+            </div>
+            <div class="form-group">
+                <label>Giới tính</label>
+                <select name="gender" class="form-control">
+                    <option value="">-- Chọn giới tính --</option>
+                    <option th:each="g : ${genders}" th:value="${g}" th:text="${g.label}"
+                            th:selected="${(ef != null ? ef.gender : emp.gender) == g}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" name="phone" class="form-control"
+                       th:value="${ef != null ? ef.phone : emp.phone}"/>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control"
+                       th:value="${ef != null ? ef.email : emp.email}"/>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ</label>
+                <input type="text" name="address" class="form-control"
+                       th:value="${ef != null ? ef.address : emp.address}"/>
+            </div>
+            <div class="form-group">
+                <label>Chức vụ <span style="color:var(--error)">*</span></label>
+                <select name="position" class="form-control" required>
+                    <option th:each="p : ${positions}" th:value="${p}" th:text="${p.label}"
+                            th:selected="${(ef != null ? ef.position : emp.position) == p}"></option>
+                </select>
+                <small class="text-muted">Không thể đổi chức vụ nếu nhân viên đã có tài khoản đăng nhập.</small>
+            </div>
+            <div class="form-group">
+                <label>Chuyên khoa</label>
+                <input type="text" name="specialty" class="form-control"
+                       th:value="${ef != null ? ef.specialty : emp.specialty}"/>
+            </div>
+            <div class="form-group">
+                <label>Học vị</label>
+                <select name="degree" class="form-control">
+                    <option value="">-- Không có --</option>
+                    <option th:each="d : ${degrees}" th:value="${d}" th:text="${d.label}"
+                            th:selected="${(ef != null ? ef.degree : emp.degree) == d}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nơi công tác</label>
+                <input type="text" name="workplace" class="form-control"
+                       th:value="${ef != null ? ef.workplace : emp.workplace}"/>
+            </div>
+            <div class="form-group">
+                <label>Ngày vào làm</label>
+                <input type="date" name="hireDate" class="form-control"
+                       th:value="${ef != null ? ef.hireDate : emp.hireDate}"/>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${(ef != null ? ef.status : emp.status) == s}"></option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </template>
+
+    <!-- ===================== Modal: Tam khoa nhan vien ===================== -->
+    <template th:each="emp : ${employees.content}" th:id="'suspendEmployeeModal-' + ${emp.id}"
+              th:data-modal-title="'Tạm khóa nhân viên: ' + ${emp.fullName}">
+        <form method="post" class="modal-form" th:action="@{/system/employees/{id}/suspend(id=${emp.id})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+            <p>Bạn có chắc chắn muốn tạm khóa nhân viên <strong th:text="${emp.fullName}"></strong> không?</p>
+            <div class="form-group">
+                <label>Lý do <span style="color:var(--error)">*</span></label>
+                <textarea name="reason" class="form-control" required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-danger">Xác nhận tạm khóa</button>
+            </div>
+        </form>
+    </template>
+
+    <!-- ===================== Modal: Cho nghi viec ===================== -->
+    <template th:each="emp : ${employees.content}" th:id="'deactivateEmployeeModal-' + ${emp.id}"
+              th:data-modal-title="'Cho nhân viên nghỉ việc: ' + ${emp.fullName}">
+        <form method="post" class="modal-form" th:action="@{/system/employees/{id}/deactivate(id=${emp.id})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+            <p>Bạn có chắc chắn muốn cho nhân viên <strong th:text="${emp.fullName}"></strong> nghỉ việc không?
+               Nếu nhân viên có tài khoản đăng nhập, tài khoản sẽ bị khóa.</p>
+            <div class="form-group">
+                <label>Lý do <span style="color:var(--error)">*</span></label>
+                <textarea name="reason" class="form-control" required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-danger">Xác nhận cho nghỉ việc</button>
+            </div>
+        </form>
+    </template>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var reopenModal = /*[[${reopenModal}]]*/ null;
+    if (reopenModal) {
+        window.__reopenModal = reopenModal;
+    }
+    /*]]>*/
+</script>
+
+</th:block>
+</body>
+</html>

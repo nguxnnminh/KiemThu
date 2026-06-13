@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Sơ đồ răng', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tiếp đón và khám bệnh / Sơ đồ răng</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Tra cứu sơ đồ răng</h2>
+            <p class="page-sub">Tìm bệnh nhân theo mã, họ tên hoặc số điện thoại để xem sơ đồ răng FDI 32.</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/clinical/tooth-chart}" class="toolbar">
+            <div class="filters">
+                <input type="text" name="keyword" class="form-control" placeholder="Mã bệnh nhân, họ tên hoặc số điện thoại"
+                       th:value="${keyword}"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" th:if="${notFound}" style="margin-bottom:var(--space-4);">
+        <div class="form-error">Không tìm thấy bệnh nhân được yêu cầu.</div>
+    </div>
+
+    <div class="card table-responsive" th:if="${results != null}">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã bệnh nhân</th>
+                <th>Họ tên</th>
+                <th>Số điện thoại</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${results}">
+                <td th:text="${p.patientCode}"></td>
+                <td th:text="${p.fullName}"></td>
+                <td th:text="${p.phone}"></td>
+                <td>
+                    <a th:href="@{/clinical/tooth-chart(patientId=${p.id})}" class="btn btn-primary" style="padding:4px 12px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:4px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Xem sơ đồ răng
+                    </a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(results)}">
+                <td colspan="4">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không tìm thấy bệnh nhân phù hợp.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" th:if="${results == null and notFound == null}">
+        <p class="page-sub">Sơ đồ răng được cập nhật trong màn hình khám bệnh. Nhập từ khóa ở trên để tra cứu sơ đồ răng của một bệnh nhân.</p>
+    </div>
+</div>
+
+<script></script>
+
+</th:block>
+</body>
+</html>

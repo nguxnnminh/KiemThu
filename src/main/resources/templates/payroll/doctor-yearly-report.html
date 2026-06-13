@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Báo cáo lương bác sĩ theo năm', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tính lương bác sĩ / Báo cáo lương bác sĩ theo năm</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Báo cáo lương một bác sĩ theo năm</h2>
+            <p class="page-sub" th:if="${doctor != null}" th:text="|${doctor.fullName} - Năm ${year}|"></p>
+            <p class="page-sub" th:if="${doctor == null}">Chọn bác sĩ và năm để xem báo cáo.</p>
+        </div>
+        <a th:if="${doctor != null}" class="btn btn-secondary"
+           th:href="@{/payroll/reports/doctor-yearly/export(doctorId=${doctorId}, year=${year})}">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Xuất Excel
+        </a>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/payroll/reports/doctor-yearly}" class="toolbar">
+            <div class="filters">
+                <select name="doctorId" class="form-control">
+                    <option value="">-- Chọn bác sĩ --</option>
+                    <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                            th:selected="${doctorId == d.id}"></option>
+                </select>
+                <input type="number" name="year" class="form-control" placeholder="Năm" min="2000" max="2100"
+                       th:value="${year}" style="max-width:120px;"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Xem báo cáo</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card table-responsive" th:if="${doctor != null}">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã phiếu</th>
+                <th>Tháng</th>
+                <th>Tổng lương (VNĐ)</th>
+                <th>Trạng thái</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${slips}">
+                <td th:text="${s.slipCode}"></td>
+                <td th:text="${s.payrollMonth}"></td>
+                <td th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td>
+                    <span class="badge badge-active" th:text="${s.status.label}"></span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(slips)}">
+                <td colspan="4">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không có phiếu lương đã duyệt nào trong năm này.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script></script>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Phiếu lương của tôi', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tính lương bác sĩ / Phiếu lương của tôi</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Phiếu lương của tôi <span class="count-chip" th:text="${slips.totalElements} + ' phiếu'">0</span></h2>
+            <p class="page-sub">Danh sách các phiếu lương theo tháng của bạn.</p>
+        </div>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã phiếu</th>
+                <th>Tháng</th>
+                <th>Năm</th>
+                <th>Tổng lương (VNĐ)</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${slips.content}">
+                <td th:text="${s.slipCode}"></td>
+                <td th:text="${s.payrollMonth}"></td>
+                <td th:text="${s.payrollYear}"></td>
+                <td th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${s.status.name() == 'APPROVED'} ? 'badge-active' : (${s.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-pending')"
+                          th:text="${s.status.label}"></span>
+                </td>
+                <td>
+                    <a th:href="@{/payroll/my-slips/{id}(id=${s.id})}" class="btn-icon" title="Xem chi tiết">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                </td>
+            </tr>
+            <tr th:if="${slips.empty}">
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Bạn chưa có phiếu lương nào.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${slips.totalPages > 1}">
+        <a th:each="p : ${#numbers.sequence(0, slips.totalPages - 1)}"
+           th:href="@{/payroll/my-slips(page=${p})}"
+           th:text="${p + 1}"
+           th:classappend="${p == slips.number} ? 'active' : ''"></a>
+    </div>
+</div>
+
+<script></script>
+</th:block>
+</body>
+</html>

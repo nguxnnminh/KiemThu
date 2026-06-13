@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Lịch khám', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Quản lý lịch khám / Lịch khám</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Lịch khám</h2>
+            <p class="page-sub">Đặt, xác nhận và theo dõi lịch hẹn khám của bệnh nhân ngay trên thời khóa biểu.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-modal-target="addAppointmentModal" data-modal-title="Đặt lịch khám">
+            + Đặt lịch khám
+        </button>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/schedule/appointments}" class="toolbar">
+            <div class="filters">
+                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã, tên bệnh nhân..."
+                       th:value="${keyword}" style="min-width:200px;"/>
+                <select name="doctorId" class="form-control">
+                    <option value="">-- Tất cả bác sĩ --</option>
+                    <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                            th:selected="${doctorFilter == d.id}"></option>
+                </select>
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${statusFilter == s}"></option>
+                </select>
+                <input type="hidden" name="weekStart" th:value="${weekStart}"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Tìm kiếm</button>
+                <a th:href="@{/schedule/appointments}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="week-nav">
+        <a class="btn btn-secondary"
+           th:href="@{/schedule/appointments(weekStart=${prevWeekStart}, keyword=${keyword}, doctorId=${doctorFilter}, status=${statusFilter})}">&laquo; Tuần trước</a>
+        <span class="week-nav-label"
+              th:text="|Tuần ${#temporals.format(weekStart, 'dd/MM/yyyy')} - ${#temporals.format(weekEnd, 'dd/MM/yyyy')}|"></span>
+        <a class="btn btn-secondary"
+           th:href="@{/schedule/appointments(weekStart=${nextWeekStart}, keyword=${keyword}, doctorId=${doctorFilter}, status=${statusFilter})}">Tuần sau &raquo;</a>
+    </div>
+
+    <div class="card grid-week-wrapper">
+        <div class="grid-week">
+            <div class="grid-week-header">
+                <div></div>
+                <div th:each="i : ${#numbers.sequence(0, 6)}"
+                     th:text="${#temporals.format(weekStart.plusDays(i), 'EEEE dd/MM')}"></div>
+            </div>
+            <th:block th:each="hour : ${#numbers.sequence(7, 19)}">
+                <div class="grid-time-col" th:text="${hour} + ':00'"></div>
+                <div class="grid-day-col" th:each="i : ${#numbers.sequence(0, 6)}">
+                    <th:block th:with="day=${weekStart.plusDays(i)}">
+                        <div th:each="pos : ${eventsByDay.get(day)}"
+                             th:if="${pos.event.startTime.hour == hour}"
+                             class="grid-event"
+                             th:classappend="${pos.event.status.name() == 'COMPLETED'} ? 'grid-event-completed' : (${pos.event.status.name() == 'CANCELLED' or pos.event.status.name() == 'NO_SHOW'} ? 'grid-event-cancelled' : (${pos.event.status.name() == 'CONFIRMED'} ? 'grid-event-confirmed' : 'grid-event-pending'))"
+                             th:attr="data-modal-target='apptDetailModal-' + ${pos.event.id}, data-modal-title='Lịch hẹn: ' + ${pos.event.appointmentCode}"
+                             th:style="|flex-basis:${100 / pos.columnCount}%;|">
+                            <strong th:text="${#temporals.format(pos.event.startTime, 'HH:mm') + '-' + #temporals.format(pos.event.endTime, 'HH:mm')}"></strong>
+                            <span th:text="${pos.event.patient != null ? pos.event.patient.fullName : '-'}"></span><br/>
+                            <span th:text="${pos.event.doctor != null ? pos.event.doctor.fullName : '-'}"></span>
+                            <div>
+                                <span class="badge"
+                                      th:classappend="${pos.event.status.name() == 'COMPLETED'} ? 'badge-completed' : (${pos.event.status.name() == 'CANCELLED' or pos.event.status.name() == 'NO_SHOW'} ? 'badge-cancelled' : (${pos.event.status.name() == 'CONFIRMED'} ? 'badge-confirmed' : 'badge-pending'))"
+                                      th:text="${pos.event.status.label}"></span>
+                            </div>
+                            <!-- Nut xac nhan nhanh cho lich PENDING (chi ADMIN/MANAGER/RECEPTIONIST) -->
+                            <form th:if="${pos.event.status.name() == 'PENDING'}"
+                                  sec:authorize="hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')"
+                                  method="post" th:action="@{/schedule/appointments/{id}/status(id=${pos.event.id})}"
+                                  class="grid-event-quick" onclick="event.stopPropagation();">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" name="status" value="CONFIRMED"/>
+                                <input type="hidden" name="note" value="Xac nhan tu lich tuan"/>
+                                <button type="submit" class="btn-quick-confirm" title="Xác nhận lịch hẹn">✓ Xác nhận</button>
+                            </form>
+                        </div>
+                    </th:block>
+                </div>
+            </th:block>
+        </div>
+    </div>
+
+    <!-- ===================== Modal: Dat lich kham ===================== -->
+    <template id="addAppointmentModal" data-modal-title="Đặt lịch khám">
+        <form method="post" class="modal-form" th:action="@{/schedule/appointments}" th:object="${appointmentForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Bệnh nhân đã có hồ sơ</label>
+                <select name="patientId" class="form-control">
+                    <option value="">-- Chọn bệnh nhân hoặc nhập thông tin mới bên dưới --</option>
+                    <option th:each="p : ${patients}" th:value="${p.id}"
+                            th:text="${p.fullName + ' - ' + (p.phone ?: '')}"
+                            th:selected="*{patientId} == ${p.id}"></option>
+                </select>
+                <small class="text-muted">Nếu bệnh nhân chưa có hồ sơ, để trống và nhập thông tin mới bên dưới.</small>
+            </div>
+            <div class="form-group">
+                <label>Họ tên bệnh nhân mới</label>
+                <input type="text" name="patientFullName" class="form-control" th:value="*{patientFullName}"/>
+            </div>
+            <div class="form-group">
+                <label>SĐT bệnh nhân mới</label>
+                <input type="text" name="patientPhone" class="form-control" th:value="*{patientPhone}" placeholder="VD: 0901234567"/>
+            </div>
+            <div class="form-group">
+                <label>Ngày sinh bệnh nhân mới</label>
+                <input type="date" name="patientDateOfBirth" class="form-control" th:value="*{patientDateOfBirth}"/>
+            </div>
+            <div class="form-group">
+                <label>Giới tính bệnh nhân mới</label>
+                <select name="patientGender" class="form-control">
+                    <option value="">-- Chọn giới tính --</option>
+                    <option th:each="g : ${genders}" th:value="${g}" th:text="${g.label}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Email bệnh nhân mới</label>
+                <input type="email" name="patientEmail" class="form-control" th:value="*{patientEmail}"/>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ bệnh nhân mới</label>
+                <input type="text" name="patientAddress" class="form-control" th:value="*{patientAddress}"/>
+            </div>
+
+            <hr/>
+
+            <div class="form-group">
+                <label>Bác sĩ <span style="color:var(--error)">*</span></label>
+                <select name="doctorId" class="form-control" required>
+                    <option value="">-- Chọn bác sĩ --</option>
+                    <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                            th:selected="*{doctorId} == ${d.id}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dịch vụ</label>
+                <select name="serviceId" class="form-control">
+                    <option value="">-- Chọn dịch vụ --</option>
+                    <option th:each="sv : ${services}" th:value="${sv.id}" th:text="${sv.name}"
+                            th:selected="*{serviceId} == ${sv.id}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ca khám <span style="color:var(--error)">*</span></label>
+                <select name="workShiftId" class="form-control" data-shift-select required>
+                    <option value="">-- Chọn ca khám --</option>
+                    <option th:each="ws : ${workShifts}" th:value="${ws.id}"
+                            th:text="${ws.name + ' (' + #temporals.format(ws.startTime, 'HH:mm') + ' - ' + #temporals.format(ws.endTime, 'HH:mm') + ') - ' + ws.dayType.label}"
+                            th:attr="data-start-time=${ws.startTime}, data-end-time=${ws.endTime}, data-day-type=${ws.dayType}"
+                            th:selected="*{workShiftId} == ${ws.id}"></option>
+                </select>
+                <small class="text-muted">Chọn ca phù hợp ngày thường/cuối tuần của ngày khám.</small>
+            </div>
+            <div class="form-group">
+                <label>Ngày khám <span style="color:var(--error)">*</span></label>
+                <input type="date" name="appointmentDate" class="form-control" data-appointment-date th:value="*{appointmentDate}" required/>
+            </div>
+            <div class="form-group">
+                <label>Giờ bắt đầu <span style="color:var(--error)">*</span></label>
+                <input type="time" name="startTime" class="form-control" th:value="*{startTime}" required/>
+            </div>
+            <div class="form-group">
+                <label>Giờ kết thúc <span style="color:var(--error)">*</span></label>
+                <input type="time" name="endTime" class="form-control" th:value="*{endTime}" required/>
+            </div>
+            <div class="form-group" data-room-chair-preview style="display:none;">
+                <label>Phòng / Ghế (tự động theo lịch trực bác sĩ)</label>
+                <input type="text" class="form-control" data-room-chair-preview-text disabled/>
+                <small class="text-muted">Phòng và ghế được hệ thống tự gán theo lịch trực đã được duyệt của bác sĩ.</small>
+            </div>
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea name="note" class="form-control" th:text="*{note}"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Đặt lịch</button>
+            </div>
+        </form>
+    </template>
+
+    <!-- ===================== Modal: Chi tiet + thao tac lich hen ===================== -->
+    <th:block th:each="day : ${eventsByDay.keySet()}">
+        <template th:each="pos : ${eventsByDay.get(day)}"
+                  th:with="a=${pos.event}"
+                  th:id="'apptDetailModal-' + ${pos.event.id}"
+                  th:data-modal-title="'Lịch hẹn: ' + ${pos.event.appointmentCode}">
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <!-- Thong tin -->
+            <dl class="kv-list" style="margin-bottom:var(--space-4);">
+                <div><dt>Bệnh nhân</dt><dd th:text="${a.patient != null ? a.patient.fullName : '-'}"></dd></div>
+                <div><dt>SĐT</dt><dd th:text="${a.patient != null ? (a.patient.phone ?: '-') : '-'}"></dd></div>
+                <div><dt>Bác sĩ</dt><dd th:text="${a.doctor != null ? a.doctor.fullName : '-'}"></dd></div>
+                <div><dt>Dịch vụ</dt><dd th:text="${a.service != null ? a.service.name : '-'}"></dd></div>
+                <div><dt>Ngày khám</dt><dd th:text="${#temporals.format(a.appointmentDate, 'dd/MM/yyyy')}"></dd></div>
+                <div><dt>Giờ</dt><dd th:text="${#temporals.format(a.startTime, 'HH:mm') + ' - ' + #temporals.format(a.endTime, 'HH:mm')}"></dd></div>
+                <div><dt>Phòng / Ghế</dt><dd th:text="${(a.room != null ? a.room.name : '-') + ' / ' + (a.chair != null ? a.chair.name : '-')}"></dd></div>
+                <div><dt>Trạng thái</dt><dd>
+                    <span class="badge"
+                          th:classappend="${a.status.name() == 'COMPLETED'} ? 'badge-completed' : (${a.status.name() == 'CANCELLED' or a.status.name() == 'NO_SHOW'} ? 'badge-cancelled' : (${a.status.name() == 'CONFIRMED'} ? 'badge-confirmed' : 'badge-pending'))"
+                          th:text="${a.status.label}"></span>
+                </dd></div>
+                <div th:if="${a.note}"><dt>Ghi chú</dt><dd th:text="${a.note}"></dd></div>
+                <div th:if="${a.cancelReason}"><dt>Lý do hủy</dt><dd th:text="${a.cancelReason}"></dd></div>
+            </dl>
+
+            <!-- Thao tac nhanh: Xac nhan / Check-in (chi khi chua o trang thai cuoi) -->
+            <div class="modal-actions"
+                 th:if="${a.status.name() != 'COMPLETED' and a.status.name() != 'CANCELLED' and a.status.name() != 'NO_SHOW'}"
+                 sec:authorize="hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')">
+                <!-- PENDING -> Xac nhan -->
+                <form th:if="${a.status.name() == 'PENDING'}" method="post"
+                      th:action="@{/schedule/appointments/{id}/status(id=${a.id})}" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="status" value="CONFIRMED"/>
+                    <input type="hidden" name="note" value="Xac nhan lich hen"/>
+                    <button type="submit" class="btn btn-success">✓ Xác nhận lịch</button>
+                </form>
+                <!-- CONFIRMED -> Check-in -->
+                <form th:if="${a.status.name() == 'CONFIRMED'}" method="post"
+                      th:action="@{/schedule/appointments/{id}/status(id=${a.id})}" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="status" value="CHECKED_IN"/>
+                    <input type="hidden" name="note" value="Check-in benh nhan"/>
+                    <button type="submit" class="btn btn-primary">Check-in</button>
+                </form>
+                <!-- CONFIRMED -> No-show -->
+                <form th:if="${a.status.name() == 'CONFIRMED'}" method="post"
+                      th:action="@{/schedule/appointments/{id}/status(id=${a.id})}" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="status" value="NO_SHOW"/>
+                    <input type="hidden" name="note" value="Benh nhan khong den"/>
+                    <button type="submit" class="btn btn-secondary">Không đến</button>
+                </form>
+            </div>
+
+            <!-- Form sua + huy (chi khi chua o trang thai cuoi) -->
+            <form th:if="${a.status.name() != 'COMPLETED' and a.status.name() != 'CANCELLED' and a.status.name() != 'NO_SHOW'}"
+                  method="post" class="modal-form" th:action="@{/schedule/appointments/{id}(id=${a.id})}"
+                  sec:authorize="hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')"
+                  style="margin-top:var(--space-3); padding-top:var(--space-3); border-top:1px solid var(--border);">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="patientId" th:value="${a.patient != null ? a.patient.id : ''}"/>
+                <h4 style="margin:0 0 var(--space-2) 0;">Sửa lịch hẹn</h4>
+                <div class="form-group">
+                    <label>Bác sĩ <span style="color:var(--error)">*</span></label>
+                    <select name="doctorId" class="form-control" required>
+                        <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                                th:selected="${(a.doctor != null ? a.doctor.id : null) == d.id}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dịch vụ</label>
+                    <select name="serviceId" class="form-control">
+                        <option value="">-- Chọn dịch vụ --</option>
+                        <option th:each="sv : ${services}" th:value="${sv.id}" th:text="${sv.name}"
+                                th:selected="${(a.service != null ? a.service.id : null) == sv.id}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ca khám <span style="color:var(--error)">*</span></label>
+                    <select name="workShiftId" class="form-control" data-shift-select required
+                            th:disabled="${a.status.name() == 'CHECKED_IN' or a.status.name() == 'IN_PROGRESS'}">
+                        <option value="">-- Chọn ca khám --</option>
+                        <option th:each="ws : ${workShifts}" th:value="${ws.id}"
+                                th:text="${ws.name + ' (' + #temporals.format(ws.startTime, 'HH:mm') + ' - ' + #temporals.format(ws.endTime, 'HH:mm') + ') - ' + ws.dayType.label}"
+                                th:attr="data-start-time=${ws.startTime}, data-end-time=${ws.endTime}, data-day-type=${ws.dayType}"
+                                th:selected="${(a.workShift != null ? a.workShift.id : null) == ws.id}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ngày khám <span style="color:var(--error)">*</span></label>
+                    <input type="date" name="appointmentDate" class="form-control" data-appointment-date
+                           th:value="${a.appointmentDate}"
+                           th:readonly="${a.status.name() == 'CHECKED_IN' or a.status.name() == 'IN_PROGRESS'}" required/>
+                </div>
+                <div class="form-group">
+                    <label>Giờ bắt đầu <span style="color:var(--error)">*</span></label>
+                    <input type="time" name="startTime" class="form-control" th:value="${a.startTime}" required/>
+                </div>
+                <div class="form-group">
+                    <label>Giờ kết thúc <span style="color:var(--error)">*</span></label>
+                    <input type="time" name="endTime" class="form-control" th:value="${a.endTime}" required/>
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <textarea name="note" class="form-control" th:text="${a.note}"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-modal-close>Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+
+            <!-- Huy lich (bat buoc ly do) -->
+            <form th:if="${a.status.name() == 'PENDING' or a.status.name() == 'CONFIRMED'}"
+                  method="post" th:action="@{/schedule/appointments/{id}/status(id=${a.id})}"
+                  sec:authorize="hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')"
+                  style="margin-top:var(--space-3); padding-top:var(--space-3); border-top:1px solid var(--border);">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="status" value="CANCELLED"/>
+                <h4 style="margin:0 0 var(--space-2) 0;">Hủy lịch hẹn</h4>
+                <div class="form-group">
+                    <label>Lý do hủy <span style="color:var(--error)">*</span></label>
+                    <textarea name="cancelReason" class="form-control" required placeholder="Nhập lý do hủy lịch..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Xác nhận hủy lịch hẹn này?');">Hủy lịch hẹn</button>
+            </form>
+
+            <!-- Trang thai cuoi: chi xem -->
+            <p th:if="${a.status.name() == 'COMPLETED' or a.status.name() == 'CANCELLED' or a.status.name() == 'NO_SHOW'}"
+               class="text-muted">Lịch hẹn đã ở trạng thái cuối, không thể thay đổi.</p>
+        </template>
+    </th:block>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var reopenModal = /*[[${reopenModal}]]*/ null;
+    if (reopenModal) {
+        window.__reopenModal = reopenModal;
+    }
+    /*]]>*/
+</script>
+
+</th:block>
+</body>
+</html>

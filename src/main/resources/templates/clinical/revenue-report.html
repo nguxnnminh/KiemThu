@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Báo cáo doanh thu', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tiếp đón và khám bệnh / Báo cáo doanh thu</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Báo cáo doanh thu</h2>
+            <p class="page-sub">Thống kê thu / hoàn tiền theo khoảng thời gian.</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/clinical/revenue}" class="toolbar">
+            <div class="filters">
+                <input type="date" name="fromDate" class="form-control" th:value="${fromDate}" title="Từ ngày"/>
+                <input type="date" name="toDate" class="form-control" th:value="${toDate}" title="Đến ngày"/>
+                <select name="paymentMethod" class="form-control">
+                    <option value="">-- Tất cả phương thức --</option>
+                    <option th:each="m : ${methods}" th:value="${m}" th:text="${m.label}"
+                            th:selected="${methodFilter == m}"></option>
+                </select>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Xem báo cáo</button>
+                <a th:href="@{/clinical/revenue}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-stats" style="margin-bottom:var(--space-4);">
+        <div class="card-stat">
+            <div class="card-stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+                <div class="card-stat-value" th:text="${#numbers.formatDecimal(summary.totalPayments, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                <div class="card-stat-label">Tổng thu</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </div>
+            <div>
+                <div class="card-stat-value" th:text="${#numbers.formatDecimal(summary.totalRefunds, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                <div class="card-stat-label">Tổng hoàn tiền</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div>
+                <div class="card-stat-value" th:text="${#numbers.formatDecimal(summary.netRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                <div class="card-stat-label">Doanh thu thuần</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div>
+                <div class="card-stat-value" th:text="${#lists.size(payments)}"></div>
+                <div class="card-stat-label">Số giao dịch</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card chart-card" style="margin-bottom:var(--space-4);" th:if="${!#lists.isEmpty(byDay)}">
+        <h3 class="card-section-title">Doanh thu thuần theo ngày</h3>
+        <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+    </div>
+
+    <div class="card table-responsive" style="margin-bottom:var(--space-4);">
+        <div class="page-header" style="margin-bottom:var(--space-2);">
+            <h3 class="card-section-title">Theo phương thức thanh toán</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Phương thức</th>
+                <th>Tổng thu</th>
+                <th>Tổng hoàn</th>
+                <th>Doanh thu thuần</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${byMethod}">
+                <td th:text="${row.label}"></td>
+                <td th:text="${#numbers.formatDecimal(row.totalPayments, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(row.totalRefunds, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(row.netRevenue, 0, 'COMMA', 0, 'POINT')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card table-responsive" style="margin-bottom:var(--space-4);">
+        <div class="page-header" style="margin-bottom:var(--space-2);">
+            <h3 class="card-section-title">Theo ngày</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Ngày</th>
+                <th>Tổng thu</th>
+                <th>Tổng hoàn</th>
+                <th>Doanh thu thuần</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${byDay}">
+                <td th:text="${row.label}"></td>
+                <td th:text="${#numbers.formatDecimal(row.totalPayments, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(row.totalRefunds, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(row.netRevenue, 0, 'COMMA', 0, 'POINT')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(byDay)}">
+                <td colspan="4">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không có dữ liệu trong khoảng thời gian này.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card table-responsive">
+        <div class="page-header" style="margin-bottom:var(--space-2);">
+            <h3 class="card-section-title">Chi tiết giao dịch</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Thời gian</th>
+                <th>Hóa đơn</th>
+                <th>Bệnh nhân</th>
+                <th>Loại</th>
+                <th>Số tiền</th>
+                <th>Phương thức</th>
+                <th>Người thu</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${payments}">
+                <td th:text="${#temporals.format(p.paidAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${p.invoice.invoiceCode}"></td>
+                <td th:text="${p.invoice.patient.fullName}"></td>
+                <td>
+                    <span class="badge" th:classappend="${p.paymentType.name() == 'REFUND'} ? 'badge-cancelled' : 'badge-paid'"
+                          th:text="${p.paymentType.label}"></span>
+                </td>
+                <td th:text="${#numbers.formatDecimal(p.amount, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${p.paymentMethod.label}"></td>
+                <td th:text="${p.collectedBy ?: '-'}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(payments)}">
+                <td colspan="7">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không có giao dịch nào trong khoảng thời gian này.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script th:inline="javascript" th:if="${!#lists.isEmpty(byDay)}">
+    /*<![CDATA[*/
+    var dayLabels = /*[[${byDay.![label]}]]*/ [];
+    var dayNet = /*[[${byDay.![netRevenue]}]]*/ [];
+    /*]]>*/
+    (function () {
+        var el = document.getElementById('revenueChart');
+        if (!el || !dayLabels.length) return;
+        function draw() {
+            new Chart(el, {
+                type: 'bar',
+                data: {
+                    labels: dayLabels,
+                    datasets: [{
+                        label: 'Doanh thu thuần (đ)',
+                        data: dayNet.map(Number),
+                        backgroundColor: 'rgba(13, 148, 136, 0.55)',
+                        borderColor: '#0d9488',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return new Intl.NumberFormat('vi-VN').format(v); } } } }
+                }
+            });
+        }
+        if (window.Chart) { draw(); return; }
+        var sc = document.createElement('script');
+        sc.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+        sc.onload = draw;
+        document.head.appendChild(sc);
+    })();
+</script>
+
+</th:block>
+</body>
+</html>

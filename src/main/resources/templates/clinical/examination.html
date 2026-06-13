@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Khám bệnh', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tiếp đón và khám bệnh / Khám bệnh</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <!-- ============ Khong co phien kham: chon BN dang kham ============ -->
+    <th:block th:if="${examSession == null}">
+        <div class="page-header">
+            <div>
+                <h2>Khám bệnh</h2>
+                <p class="page-sub">Chọn bệnh nhân đang khám để ghi nhận triệu chứng, chẩn đoán và kế hoạch điều trị.</p>
+            </div>
+        </div>
+
+        <div class="kanban">
+            <section class="kanban-col">
+                <header class="kanban-col-head kanban-head-exam">
+                    <span class="kanban-col-title"><span class="kanban-dot"></span>Bệnh nhân đang khám</span>
+                    <span class="kanban-count" th:text="${#lists.size(inExamQueue)}">0</span>
+                </header>
+                <div class="kanban-body">
+                    <article class="patient-card" th:each="c : ${inExamQueue}">
+                        <div class="patient-card-top">
+                            <span class="queue-number queue-number-sm queue-number-exam" th:text="${c.queueNumber}"></span>
+                            <div class="patient-card-id">
+                                <span class="patient-card-name" th:text="${c.patient.fullName}"></span>
+                                <span class="patient-card-phone" th:text="${c.patient.phone}"></span>
+                            </div>
+                            <span class="text-muted" th:text="${#temporals.format(c.checkinTime, 'HH:mm')}"></span>
+                        </div>
+                        <a th:href="@{/clinical/examination(sessionId=${sessionIdsByCheckin.get(c.id)})}" class="btn btn-primary btn-block btn-sm">Khám</a>
+                    </article>
+                    <div class="kanban-empty" th:if="${#lists.isEmpty(inExamQueue)}">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không có bệnh nhân đang khám. Vui lòng bắt đầu khám từ Hàng đợi khám.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </th:block>
+
+    <!-- ============ Co phien kham: layout 2 cot ============ -->
+    <div th:if="${examSession != null}">
+        <div class="exam-status-strip">
+            <div>
+                <h3 th:text="'Phiên khám ' + ${examSession.sessionCode}"></h3>
+                <div class="exam-status-meta">
+                    <span>Bệnh nhân: <strong th:text="${examSession.patient.fullName}"></strong> (<span th:text="${examSession.patient.patientCode}"></span>)</span>
+                    <span>Giới tính: <strong th:text="${examSession.patient.gender != null ? examSession.patient.gender.label : '-'}"></strong></span>
+                    <span>Năm sinh: <strong th:text="${examSession.patient.dateOfBirth != null ? #temporals.format(examSession.patient.dateOfBirth, 'yyyy') : '-'}"></strong></span>
+                    <span>SĐT: <strong th:text="${examSession.patient.phone ?: '-'}"></strong></span>
+                    <span>Bác sĩ: <strong th:text="${examSession.doctor.fullName}"></strong></span>
+                    <span>Ngày khám: <strong th:text="${#temporals.format(examSession.examinationDate, 'dd/MM/yyyy')}"></strong></span>
+                </div>
+            </div>
+            <span class="badge"
+                  th:classappend="${examSession.status.name() == 'COMPLETED'} ? 'badge-completed' : (${examSession.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-in-progress')"
+                  th:text="${examSession.status.label}"></span>
+        </div>
+
+        <div class="tabs">
+            <span class="tab-link active" data-tab="tab-info">Thông tin lượt khám</span>
+            <span class="tab-link" data-tab="tab-tooth-chart">Sơ đồ răng</span>
+            <a class="tab-link" th:href="@{/clinical/services(sessionId=${examSession.id})}">Dịch vụ điều trị</a>
+            <span class="tab-link" data-tab="tab-history">Lịch sử điều trị</span>
+            <span class="tab-link" data-tab="tab-invoice" th:if="${examSession.status.name() == 'COMPLETED'}">Hóa đơn</span>
+        </div>
+
+        <div id="tab-info" class="tab-panel active">
+            <div class="exam-layout">
+                <!-- Cot trai: form kham -->
+                <div class="exam-main">
+                    <div class="card">
+                        <h3 class="card-section-title">Khám bệnh</h3>
+                        <form method="post" th:action="@{/clinical/examination/{id}/complete(id=${examSession.id})}" th:object="${examinationForm}"
+                              th:attr="data-readonly=${examSession.status.name() != 'OPEN'}"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn hoàn tất phiên khám này? Sau khi hoàn tất sẽ không thể chỉnh sửa thông tin khám, sơ đồ răng và dịch vụ điều trị.');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="sessionId" th:value="${examSession.id}"/>
+                            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+                            <div class="form-group">
+                                <label>Triệu chứng</label>
+                                <textarea name="symptom" class="form-control" rows="3"
+                                          th:disabled="${examSession.status.name() != 'OPEN'}" th:text="*{symptom}"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Chẩn đoán <span style="color:var(--error)">*</span></label>
+                                <textarea name="diagnosis" class="form-control" rows="3"
+                                          th:disabled="${examSession.status.name() != 'OPEN'}" th:text="*{diagnosis}"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Kế hoạch điều trị</label>
+                                <textarea name="treatmentPlan" class="form-control" rows="3"
+                                          th:disabled="${examSession.status.name() != 'OPEN'}" th:text="*{treatmentPlan}"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Ghi chú của bác sĩ</label>
+                                <textarea name="doctorNote" class="form-control" rows="2"
+                                          th:disabled="${examSession.status.name() != 'OPEN'}" th:text="*{doctorNote}"></textarea>
+                            </div>
+
+                            <div class="complex-case-card" th:if="${examSession.status.name() == 'OPEN'}">
+                                <h4 style="margin:0 0 var(--space-2) 0;">Hệ số ca phức tạp</h4>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Hệ số (0.1 - 0.5)</label>
+                                        <input type="number" name="complexCaseCoefficient" id="exam-complexCaseCoefficient" class="form-control"
+                                               step="0.1" min="0.1" max="0.5" th:value="*{complexCaseCoefficient}"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Lý do</label>
+                                        <textarea name="complexCaseReason" id="exam-complexCaseReason" class="form-control" rows="2" th:text="*{complexCaseReason}"></textarea>
+                                    </div>
+                                </div>
+                                <p class="form-hint">Hệ số ca khó sẽ được gửi duyệt khi hoàn tất khám.</p>
+                            </div>
+
+                            <div class="complex-case-card" th:if="${examSession.status.name() == 'COMPLETED'}">
+                                <h4 style="margin:0 0 var(--space-2) 0;">Hệ số ca phức tạp</h4>
+                                <div class="complex-case-summary" th:if="${complexCaseCoefficient != null}">
+                                    <p>Hệ số đề xuất: <strong th:text="${complexCaseCoefficient.coefficient}"></strong></p>
+                                    <p>Lý do: <span th:text="${complexCaseCoefficient.reason}"></span></p>
+                                    <p>Trạng thái:
+                                        <span class="badge"
+                                              th:classappend="${complexCaseCoefficient.status.name() == 'APPROVED'} ? 'badge-active' : (${complexCaseCoefficient.status.name() == 'REJECTED'} ? 'badge-cancelled' : 'badge-pending')"
+                                              th:text="${complexCaseCoefficient.status.label}"></span>
+                                    </p>
+                                    <p th:if="${complexCaseCoefficient.status.name() == 'REJECTED'}">
+                                        Lý do từ chối: <span th:text="${complexCaseCoefficient.rejectReason}"></span>
+                                    </p>
+                                </div>
+                                <p th:if="${complexCaseCoefficient == null}">Chưa đề xuất hệ số ca phức tạp.</p>
+                            </div>
+
+                            <div class="action-buttons" th:if="${examSession.status.name() == 'OPEN'}">
+                                <button type="submit" class="btn btn-success">Hoàn tất khám</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Cot phai: thong tin BN -->
+                <aside class="exam-aside">
+                    <div class="card info-card-block">
+                        <h3 class="card-section-title">Thông tin phiên khám</h3>
+                        <dl class="kv-list">
+                            <div><dt>Bệnh nhân</dt><dd th:text="${examSession.patient.fullName}"></dd></div>
+                            <div><dt>Mã bệnh nhân</dt><dd th:text="${examSession.patient.patientCode}"></dd></div>
+                            <div><dt>Hồ sơ bệnh án</dt><dd th:text="${examSession.medicalRecord.recordCode}"></dd></div>
+                            <div><dt>Giới tính</dt><dd th:text="${examSession.patient.gender != null ? examSession.patient.gender.label : '-'}"></dd></div>
+                            <div><dt>Ngày sinh</dt><dd th:text="${examSession.patient.dateOfBirth != null ? #temporals.format(examSession.patient.dateOfBirth, 'dd/MM/yyyy') : '-'}"></dd></div>
+                            <div><dt>SĐT</dt><dd th:text="${examSession.patient.phone}"></dd></div>
+                            <div><dt>Email</dt><dd th:text="${examSession.patient.email ?: '-'}"></dd></div>
+                            <div><dt>Địa chỉ</dt><dd th:text="${examSession.patient.address ?: '-'}"></dd></div>
+                            <div><dt>Bác sĩ</dt><dd th:text="${examSession.doctor.fullName}"></dd></div>
+                            <div><dt>Ngày khám</dt><dd th:text="${#temporals.format(examSession.examinationDate, 'dd/MM/yyyy')}"></dd></div>
+                            <div><dt>Trạng thái</dt><dd>
+                                <span class="badge"
+                                      th:classappend="${examSession.status.name() == 'COMPLETED'} ? 'badge-completed' : (${examSession.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-in-progress')"
+                                      th:text="${examSession.status.label}"></span>
+                            </dd></div>
+                        </dl>
+                        <div class="exam-aside-links">
+                            <a th:href="@{/clinical/medical-records(keyword=${examSession.patient.patientCode})}" class="btn btn-secondary btn-sm btn-block">Hồ sơ bệnh án</a>
+                            <a th:href="@{/clinical/tooth-chart(patientId=${examSession.patient.id}, sessionId=${examSession.id})}" class="btn btn-secondary btn-sm btn-block">Sơ đồ răng FDI 32</a>
+                            <a th:href="@{/clinical/services(sessionId=${examSession.id})}" class="btn btn-secondary btn-sm btn-block">Dịch vụ điều trị</a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div id="tab-tooth-chart" class="tab-panel">
+            <div class="card" style="margin-bottom:var(--space-4);">
+                <div class="page-header" style="margin-bottom:var(--space-2);">
+                    <h3 class="card-section-title">Sơ đồ răng FDI 32</h3>
+                    <a th:href="@{/clinical/tooth-chart(patientId=${examSession.patient.id}, sessionId=${examSession.id})}" class="btn btn-secondary btn-sm">Mở trang chi tiết</a>
+                </div>
+
+                <div class="dental-chart">
+                    <div class="dental-quadrant">
+                        <div class="dental-quadrant-title">Hàm trên phải (18 - 11)</div>
+                        <div class="dental-row">
+                            <a th:each="t : ${#numbers.sequence(18, 11, -1)}"
+                               th:href="@{/clinical/examination(sessionId=${examSession.id}, toothNumber=${t})}"
+                               class="tooth"
+                               th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                               th:text="${t}"
+                               th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                        </div>
+                    </div>
+                    <div class="dental-quadrant">
+                        <div class="dental-quadrant-title">Hàm trên trái (21 - 28)</div>
+                        <div class="dental-row">
+                            <a th:each="t : ${#numbers.sequence(21, 28)}"
+                               th:href="@{/clinical/examination(sessionId=${examSession.id}, toothNumber=${t})}"
+                               class="tooth"
+                               th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                               th:text="${t}"
+                               th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                        </div>
+                    </div>
+                    <div class="dental-quadrant">
+                        <div class="dental-quadrant-title">Hàm dưới phải (48 - 41)</div>
+                        <div class="dental-row">
+                            <a th:each="t : ${#numbers.sequence(48, 41, -1)}"
+                               th:href="@{/clinical/examination(sessionId=${examSession.id}, toothNumber=${t})}"
+                               class="tooth"
+                               th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                               th:text="${t}"
+                               th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                        </div>
+                    </div>
+                    <div class="dental-quadrant">
+                        <div class="dental-quadrant-title">Hàm dưới trái (31 - 38)</div>
+                        <div class="dental-row">
+                            <a th:each="t : ${#numbers.sequence(31, 38)}"
+                               th:href="@{/clinical/examination(sessionId=${examSession.id}, toothNumber=${t})}"
+                               class="tooth"
+                               th:classappend="${(chart.containsKey(t) ? chart.get(t).status.colorClass : 'tooth-normal')} + ${selectedTooth != null and selectedTooth == t ? ' selected' : ''}"
+                               th:text="${t}"
+                               th:title="${chart.containsKey(t) ? chart.get(t).status.label : 'Bình thường'}"></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tooth-legend">
+                    <div class="tooth-legend-item" th:each="s : ${toothStatuses}">
+                        <span class="tooth-legend-swatch" th:classappend="${s.colorClass}"></span>
+                        <span th:text="${s.label}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${selectedTooth != null}">
+                <div class="page-header" style="margin-bottom:var(--space-2);">
+                    <h3 class="card-section-title">Răng số <span th:text="${selectedTooth}"></span></h3>
+                </div>
+
+                <form method="post" th:action="@{/clinical/tooth-chart}" th:object="${toothForm}"
+                      th:if="${examSession.status.name() == 'OPEN'}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="patientId" th:value="${examSession.patient.id}"/>
+                    <input type="hidden" name="sessionId" th:value="${examSession.id}"/>
+                    <input type="hidden" name="toothNumber" th:value="${selectedTooth}"/>
+                    <input type="hidden" name="returnTo" value="examination"/>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Trạng thái</label>
+                            <select name="status" class="form-control" required>
+                                <option th:each="s : ${toothStatuses}" th:value="${s}" th:text="${s.label}"
+                                        th:selected="${chart.containsKey(selectedTooth) and chart.get(selectedTooth).status == s}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Chẩn đoán</label>
+                            <input type="text" name="diagnosis" class="form-control" maxlength="255"
+                                   th:value="${chart.containsKey(selectedTooth) ? chart.get(selectedTooth).diagnosis : ''}"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ghi chú</label>
+                        <textarea name="note" class="form-control" rows="2" maxlength="255"
+                                  th:text="${chart.containsKey(selectedTooth) ? chart.get(selectedTooth).note : ''}"></textarea>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-primary">Lưu trạng thái răng</button>
+                    </div>
+                </form>
+
+                <p th:if="${examSession.status.name() != 'OPEN'}" class="page-sub">
+                    Phiên khám đã hoàn tất nên không thể chỉnh sửa trạng thái răng.
+                </p>
+
+                <div style="margin-top:var(--space-4);" th:if="${history != null and not #lists.isEmpty(history)}">
+                    <h4 class="card-section-title">Lịch sử thay đổi</h4>
+                    <ul class="timeline">
+                        <li th:each="h : ${history}">
+                            <div class="timeline-time" th:text="${#temporals.format(h.updatedAt, 'dd/MM/yyyy HH:mm')}"></div>
+                            <div class="timeline-content">
+                                <span th:text="${h.oldStatus != null ? h.oldStatus.label : 'Chưa có'}"></span>
+                                →
+                                <strong th:text="${h.newStatus.label}"></strong>
+                                <span th:if="${h.diagnosis}"> - Chẩn đoán: <span th:text="${h.diagnosis}"></span></span>
+                                <span th:if="${h.note}"> - Ghi chú: <span th:text="${h.note}"></span></span>
+                                <span class="text-muted" th:if="${h.updatedBy}"> (bởi <span th:text="${h.updatedBy}"></span>)</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-history" class="tab-panel">
+            <div class="card">
+                <h3 class="card-section-title">Lịch sử điều trị</h3>
+                <p class="page-sub">
+                    Xem lịch sử cập nhật trạng thái răng tại
+                    <a th:href="@{/clinical/tooth-chart(patientId=${examSession.patient.id}, sessionId=${examSession.id})}">Sơ đồ răng FDI 32</a>.
+                </p>
+            </div>
+        </div>
+
+        <div id="tab-invoice" class="tab-panel" th:if="${examSession.status.name() == 'COMPLETED'}">
+            <div class="card">
+                <h3 class="card-section-title">Hóa đơn</h3>
+                <div th:if="${invoiceId != null}">
+                    <a th:href="@{/clinical/invoices/{id}(id=${invoiceId})}" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Xem hóa đơn
+                    </a>
+                </div>
+                <p th:if="${invoiceId == null}">Không có dịch vụ nào để lập hóa đơn.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    function activateClinicalTab(tabId) {
+        var link = document.querySelector('.tab-link[data-tab="' + tabId + '"]');
+        var panel = document.getElementById(tabId);
+        if (!link || !panel) return;
+        document.querySelectorAll('.tab-link[data-tab]').forEach(function (l) { l.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        link.classList.add('active');
+        panel.classList.add('active');
+    }
+
+    document.querySelectorAll('.tab-link[data-tab]').forEach(function (link) {
+        link.addEventListener('click', function () {
+            activateClinicalTab(link.getAttribute('data-tab'));
+        });
+    });
+
+    if (/*[[${selectedTooth != null}]]*/ false) {
+        activateClinicalTab('tab-tooth-chart');
+    }
+</script>
+
+</th:block>
+</body>
+</html>

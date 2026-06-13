@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{layout/main :: layout('Hóa đơn của tôi', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Dịch vụ của tôi / Hóa đơn của tôi</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <h2>Hóa đơn của tôi <span class="count-chip" th:text="${invoices.totalElements} + ' hóa đơn'">0</span></h2>
+        <p class="page-sub">Danh sách hóa đơn thanh toán dịch vụ khám chữa bệnh.</p>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã hóa đơn</th>
+                <th>Ngày khám</th>
+                <th>Tổng tiền</th>
+                <th>Giảm giá</th>
+                <th>Thành tiền</th>
+                <th>Đã thanh toán</th>
+                <th>Còn lại</th>
+                <th>Trạng thái</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="i : ${invoices.content}">
+                <td th:text="${i.invoiceCode}"></td>
+                <td th:text="${#temporals.format(i.treatmentSession.examinationDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${#numbers.formatDecimal(i.totalAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(i.discountAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td><strong th:text="${#numbers.formatDecimal(i.finalAmount, 0, 'COMMA', 0, 'POINT')}"></strong></td>
+                <td th:text="${#numbers.formatDecimal(i.paidAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(i.remainingAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${i.remainingAmount.compareTo(T(java.math.BigDecimal).ZERO) == 0 and i.status.name() != 'CANCELLED'} ? 'badge-paid' : (${i.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-unpaid')"
+                          th:text="${i.remainingAmount.compareTo(T(java.math.BigDecimal).ZERO) == 0 and i.status.name() != 'CANCELLED'} ? 'Đã thanh toán' : (${i.status.name() == 'CANCELLED'} ? 'Đã hủy' : 'Chưa thanh toán')"></span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(invoices.content)}">
+                <td colspan="8">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Bạn chưa có hóa đơn nào.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${invoices.totalPages > 1}">
+        <a th:each="p : ${#numbers.sequence(0, invoices.totalPages - 1)}"
+           th:href="@{/patient/invoices(page=${p})}"
+           th:text="${p + 1}"
+           th:classappend="${p == invoices.number} ? 'active' : ''"></a>
+    </div>
+</div>
+
+<script></script>
+
+</th:block>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="'Hóa đơn ' + ${invoice.invoiceCode}"></title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 13px; color: #222; margin: 24px; }
+        h1 { text-align: center; font-size: 20px; margin-bottom: 4px; }
+        .sub { text-align: center; margin-bottom: 16px; color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        .text-right { text-align: right; }
+        .summary td { border: none; padding: 4px 8px; }
+        .summary { width: 320px; margin-left: auto; }
+        .info { margin-bottom: 12px; }
+        @media print {
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+<h1>HÓA ĐƠN THANH TOÁN</h1>
+<p class="sub">Mã hóa đơn: <strong th:text="${invoice.invoiceCode}"></strong> -
+    Ngày khám: <span th:text="${#temporals.format(invoice.treatmentSession.examinationDate, 'dd/MM/yyyy')}"></span></p>
+
+<div class="info">
+    <p>Bệnh nhân: <strong th:text="${invoice.patient.fullName}"></strong></p>
+    <p>Số điện thoại: <span th:text="${invoice.patient.phone}"></span></p>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>Dịch vụ</th>
+        <th>Đơn vị</th>
+        <th class="text-right">Số lượng</th>
+        <th class="text-right">Đơn giá</th>
+        <th class="text-right">Giảm giá</th>
+        <th class="text-right">Thành tiền</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${items}">
+        <td th:text="${item.serviceNameSnapshot}"></td>
+        <td th:text="${item.unitSnapshot.label}"></td>
+        <td class="text-right" th:text="${item.quantity}"></td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')}"></td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(item.discountAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(item.totalAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="summary">
+    <tr>
+        <td>Tổng tiền</td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.totalAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+    </tr>
+    <tr>
+        <td>Giảm giá</td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.discountAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+    </tr>
+    <tr>
+        <td><strong>Thành tiền</strong></td>
+        <td class="text-right"><strong th:text="${#numbers.formatDecimal(invoice.finalAmount, 0, 'COMMA', 0, 'POINT')}"></strong></td>
+    </tr>
+    <tr>
+        <td>Đã thanh toán</td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.paidAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+    </tr>
+    <tr>
+        <td>Còn lại</td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(invoice.remainingAmount, 0, 'COMMA', 0, 'POINT')}"></td>
+    </tr>
+</table>
+
+<table th:if="${not #lists.isEmpty(payments)}">
+    <thead>
+    <tr>
+        <th>Thời gian</th>
+        <th>Loại</th>
+        <th class="text-right">Số tiền</th>
+        <th>Phương thức</th>
+        <th>Người thu</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${payments}">
+        <td th:text="${#temporals.format(p.paidAt, 'dd/MM/yyyy HH:mm')}"></td>
+        <td th:text="${p.paymentType.label}"></td>
+        <td class="text-right" th:text="${#numbers.formatDecimal(p.amount, 0, 'COMMA', 0, 'POINT')}"></td>
+        <td th:text="${p.paymentMethod.label}"></td>
+        <td th:text="${p.collectedBy ?: '-'}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="no-print" style="margin-top:16px;">
+    <button onclick="window.print()">In hóa đơn</button>
+</div>
+</body>
+</html>

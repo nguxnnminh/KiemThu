@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Phiếu lương bác sĩ', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tính lương bác sĩ / Phiếu lương tháng</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Phiếu lương bác sĩ theo tháng <span class="count-chip" th:text="${slips.totalElements} + ' phiếu'">0</span></h2>
+            <p class="page-sub">Lương được tổng hợp theo từng ca bệnh nhân đã hoàn tất khám trong tháng.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-modal-target="createSlipModal" data-modal-title="Lập phiếu lương">
+            + Lập phiếu lương
+        </button>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/payroll/slips}" class="toolbar">
+            <div class="filters">
+                <select name="doctorId" class="form-control">
+                    <option value="">-- Tất cả bác sĩ --</option>
+                    <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                            th:selected="${doctorFilter == d.id}"></option>
+                </select>
+                <input type="number" name="year" class="form-control" placeholder="Năm" min="2000" max="2100"
+                       th:value="${yearFilter}" style="max-width:120px;"/>
+                <input type="number" name="month" class="form-control" placeholder="Tháng" min="1" max="12"
+                       th:value="${monthFilter}" style="max-width:100px;"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Tìm kiếm</button>
+                <a th:href="@{/payroll/slips}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã phiếu</th>
+                <th>Bác sĩ</th>
+                <th>Tháng</th>
+                <th>Năm</th>
+                <th>Tổng lương (VNĐ)</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${slips.content}">
+                <td th:text="${s.slipCode}"></td>
+                <td th:text="${s.doctor.fullName}"></td>
+                <td th:text="${s.payrollMonth}"></td>
+                <td th:text="${s.payrollYear}"></td>
+                <td th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${s.status.name() == 'APPROVED'} ? 'badge-active' : (${s.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-pending')"
+                          th:text="${s.status.label}"></span>
+                </td>
+                <td>
+                    <a th:href="@{/payroll/slips/{id}(id=${s.id})}" class="btn-icon" title="Xem chi tiết">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                </td>
+            </tr>
+            <tr th:if="${slips.empty}">
+                <td colspan="7">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Chưa có phiếu lương nào.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${slips.totalPages > 1}">
+        <a th:each="p : ${#numbers.sequence(0, slips.totalPages - 1)}"
+           th:href="@{/payroll/slips(page=${p}, year=${yearFilter}, month=${monthFilter}, doctorId=${doctorFilter})}"
+           th:text="${p + 1}"
+           th:classappend="${p == slips.number} ? 'active' : ''"></a>
+    </div>
+
+    <!-- ===================== Modal: Lap phieu luong ===================== -->
+    <template id="createSlipModal" data-modal-title="Lập phiếu lương">
+        <form method="post" class="modal-form" th:action="@{/payroll/slips/create}" th:object="${createForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Bác sĩ <span style="color:var(--error)">*</span></label>
+                <select name="doctorId" class="form-control" required>
+                    <option value="">-- Chọn bác sĩ --</option>
+                    <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                            th:selected="*{doctorId} == ${d.id}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Năm <span style="color:var(--error)">*</span></label>
+                <input type="number" name="payrollYear" class="form-control" min="2000" max="2100" th:value="*{payrollYear}" required/>
+            </div>
+            <div class="form-group">
+                <label>Tháng <span style="color:var(--error)">*</span></label>
+                <input type="number" name="payrollMonth" class="form-control" min="1" max="12" th:value="*{payrollMonth}" required/>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lập phiếu</button>
+            </div>
+        </form>
+    </template>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var reopenModal = /*[[${reopenModal}]]*/ null;
+    if (reopenModal) {
+        window.__reopenModal = reopenModal;
+    }
+    /*]]>*/
+</script>
+
+</th:block>
+</body>
+</html>

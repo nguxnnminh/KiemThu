@@ -1,0 +1,25 @@
+# Maven build output
+target/
+*.releaseBackup
+
+# Logging
+*.log
+logs/
+
+# IDE / Editor configurations
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.metadata/
+
+# OS specific files
+Thumbs.db
+db.properties
+.DS_Store
+
+# Other tools
+.claude/
+.codex/

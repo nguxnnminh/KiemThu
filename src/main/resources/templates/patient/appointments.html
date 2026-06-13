@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{layout/main :: layout('Lịch hẹn của tôi', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Dịch vụ của tôi / Lịch hẹn của tôi</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <h2>Lịch hẹn của tôi</h2>
+        <p class="page-sub">Danh sách các lịch hẹn khám đã đặt.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/patient/appointments}" class="toolbar">
+            <div class="filters">
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${statusFilter == s}"></option>
+                </select>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Lọc</button>
+                <a th:href="@{/patient/appointments}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="week-nav">
+        <a class="btn btn-secondary"
+           th:href="@{/patient/appointments(weekStart=${prevWeekStart}, status=${statusFilter})}">&laquo; Tuần trước</a>
+        <span class="week-nav-label"
+              th:text="'Tuần ' + ${#temporals.format(weekStart, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(weekEnd, 'dd/MM/yyyy')}"></span>
+        <a class="btn btn-secondary"
+           th:href="@{/patient/appointments(weekStart=${nextWeekStart}, status=${statusFilter})}">Tuần sau &raquo;</a>
+    </div>
+
+    <div class="card grid-week-wrapper">
+        <div class="grid-week">
+            <div class="grid-week-header">
+                <div></div>
+                <div th:each="i : ${#numbers.sequence(0, 6)}"
+                     th:text="${#temporals.format(weekStart.plusDays(i), 'EEEE dd/MM')}"></div>
+            </div>
+            <th:block th:each="hour : ${#numbers.sequence(7, 19)}">
+                <div class="grid-time-col" th:text="${hour} + ':00'"></div>
+                <div class="grid-day-col" th:each="i : ${#numbers.sequence(0, 6)}">
+                    <th:block th:with="day=${weekStart.plusDays(i)}">
+                        <div th:each="pos : ${eventsByDay.get(day)}"
+                             th:if="${pos.event.startTime.hour == hour}"
+                             class="grid-event"
+                             th:classappend="${pos.event.status.name() == 'COMPLETED'} ? 'grid-event-completed' : (${pos.event.status.name() == 'CANCELLED' or pos.event.status.name() == 'NO_SHOW'} ? 'grid-event-cancelled' : (${pos.event.status.name() == 'CONFIRMED'} ? 'grid-event-confirmed' : 'grid-event-pending'))"
+                             th:style="|flex-basis:${100 / pos.columnCount}%;|">
+                            <strong th:text="${#temporals.format(pos.event.startTime, 'HH:mm') + '-' + #temporals.format(pos.event.endTime, 'HH:mm')}"></strong>
+                            <span th:text="${pos.event.doctor != null ? pos.event.doctor.fullName : '-'}"></span><br/>
+                            <span th:text="${pos.event.service != null ? pos.event.service.name : '-'}"></span>
+                            <div>
+                                <span class="badge"
+                                      th:classappend="${pos.event.status.name() == 'COMPLETED'} ? 'badge-completed' : (${pos.event.status.name() == 'CANCELLED' or pos.event.status.name() == 'NO_SHOW'} ? 'badge-cancelled' : (${pos.event.status.name() == 'CONFIRMED'} ? 'badge-confirmed' : 'badge-pending'))"
+                                      th:text="${pos.event.status.label}"></span>
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+            </th:block>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+</script>
+
+</th:block>
+</body>
+</html>

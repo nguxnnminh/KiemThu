@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Quản lý bệnh nhân', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Quản lý lịch khám / Bệnh nhân</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Quản lý hồ sơ bệnh nhân</h2>
+            <p class="page-sub">Quản lý thông tin hồ sơ bệnh nhân của phòng khám.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-modal-target="addPatientModal" data-modal-title="Thêm bệnh nhân">
+            + Thêm bệnh nhân
+        </button>
+    </div>
+
+    <div class="card-stats" style="margin-bottom:var(--space-4);">
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.total()}">0</div>
+                <div class="card-stat-label">Tổng bệnh nhân</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.active()}">0</div>
+                <div class="card-stat-label">Đang theo dõi</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${stats.inactive()}">0</div>
+                <div class="card-stat-label">Ngừng theo dõi</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/schedule/patients}" class="toolbar">
+            <div class="filters">
+                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã, tên, SĐT..."
+                       th:value="${keyword}" style="min-width:220px;"/>
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${statusFilter == s}"></option>
+                </select>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Tìm kiếm</button>
+                <a th:href="@{/schedule/patients}" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card table-responsive">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã bệnh nhân</th>
+                <th>Họ tên</th>
+                <th>Ngày sinh</th>
+                <th>Giới tính</th>
+                <th>SĐT</th>
+                <th>Email</th>
+                <th>Địa chỉ</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${patients.content}">
+                <td th:text="${p.patientCode}"></td>
+                <td th:text="${p.fullName}"></td>
+                <td th:text="${p.dateOfBirth != null ? #temporals.format(p.dateOfBirth, 'dd/MM/yyyy') : '-'}"></td>
+                <td th:text="${p.gender != null ? p.gender.label : '-'}"></td>
+                <td th:text="${p.phone} ?: '-'"></td>
+                <td th:text="${p.email} ?: '-'"></td>
+                <td th:text="${p.address} ?: '-'"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${p.status.name() == 'ACTIVE'} ? 'badge-active' : 'badge-inactive'"
+                          th:text="${p.status.label}"></span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button type="button" class="btn-icon" title="Sửa bệnh nhân"
+                                th:attr="data-modal-target='editPatientModal-' + ${p.id}, data-modal-title='Sửa bệnh nhân: ' + ${p.fullName}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+
+                        <button th:if="${p.status.name() == 'ACTIVE'}" type="button" class="btn-icon btn-icon-danger" title="Ngừng hoạt động"
+                                th:attr="data-confirm-form='deactivatePatientForm-' + ${p.id}, data-confirm-title='Ngừng hoạt động hồ sơ', data-confirm-message='Bạn có chắc chắn muốn ngừng hoạt động hồ sơ của ' + ${p.fullName} + '?'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        </button>
+                        <form th:id="'deactivatePatientForm-' + ${p.id}" method="post"
+                              th:action="@{/schedule/patients/{id}/deactivate(id=${p.id})}" style="display:none">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        </form>
+
+                        <button th:if="${p.status.name() != 'ACTIVE'}" type="button" class="btn-icon" title="Kích hoạt lại"
+                                th:attr="data-confirm-form='activatePatientForm-' + ${p.id}, data-confirm-title='Kích hoạt lại hồ sơ', data-confirm-message='Bạn có chắc chắn muốn kích hoạt lại hồ sơ của ' + ${p.fullName} + '?'">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <form th:id="'activatePatientForm-' + ${p.id}" method="post"
+                              th:action="@{/schedule/patients/{id}/activate(id=${p.id})}" style="display:none">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${patients.empty}">
+                <td colspan="9">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không tìm thấy bệnh nhân nào phù hợp.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" th:if="${patients.totalPages > 1}">
+        <a th:each="p : ${#numbers.sequence(0, patients.totalPages - 1)}"
+           th:href="@{/schedule/patients(page=${p}, keyword=${keyword}, status=${statusFilter})}"
+           th:text="${p + 1}"
+           th:classappend="${p == patients.number} ? 'active' : ''"></a>
+    </div>
+
+    <!-- ===================== Modal: Them benh nhan ===================== -->
+    <template id="addPatientModal" data-modal-title="Thêm bệnh nhân">
+        <form method="post" class="modal-form" th:action="@{/schedule/patients}" th:object="${patientForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Họ tên <span style="color:var(--error)">*</span></label>
+                <input type="text" name="fullName" class="form-control" th:value="*{fullName}" required/>
+            </div>
+            <div class="form-group">
+                <label>Ngày sinh</label>
+                <input type="date" name="dateOfBirth" class="form-control" th:value="*{dateOfBirth}"/>
+            </div>
+            <div class="form-group">
+                <label>Giới tính</label>
+                <select name="gender" class="form-control">
+                    <option value="">-- Chọn giới tính --</option>
+                    <option th:each="g : ${genders}" th:value="${g}" th:text="${g.label}"
+                            th:selected="*{gender} == ${g}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số điện thoại <span style="color:var(--error)">*</span></label>
+                <input type="text" name="phone" class="form-control" th:value="*{phone}" placeholder="VD: 0901234567" required/>
+                <small class="text-muted">Gồm 10 chữ số, bắt đầu bằng số 0.</small>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" th:value="*{email}"/>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ</label>
+                <input type="text" name="address" class="form-control" th:value="*{address}"/>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="*{status} == ${s}"></option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </template>
+
+    <!-- ===================== Modal: Sua benh nhan ===================== -->
+    <template th:each="p : ${patients.content}" th:id="'editPatientModal-' + ${p.id}"
+              th:data-modal-title="'Sửa bệnh nhân: ' + ${p.fullName}"
+              th:with="ef=${editForms.get('editPatientForm-' + p.id)}">
+        <form method="post" class="modal-form" th:action="@{/schedule/patients/{id}(id=${p.id})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="form-group">
+                <label>Mã bệnh nhân</label>
+                <input type="text" class="form-control" th:value="${p.patientCode}" disabled/>
+            </div>
+            <div class="form-group">
+                <label>Họ tên <span style="color:var(--error)">*</span></label>
+                <input type="text" name="fullName" class="form-control"
+                       th:value="${ef != null ? ef.fullName : p.fullName}" required/>
+            </div>
+            <div class="form-group">
+                <label>Ngày sinh</label>
+                <input type="date" name="dateOfBirth" class="form-control"
+                       th:value="${ef != null ? ef.dateOfBirth : p.dateOfBirth}"/>
+            </div>
+            <div class="form-group">
+                <label>Giới tính</label>
+                <select name="gender" class="form-control">
+                    <option value="">-- Chọn giới tính --</option>
+                    <option th:each="g : ${genders}" th:value="${g}" th:text="${g.label}"
+                            th:selected="${(ef != null ? ef.gender : p.gender) == g}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số điện thoại <span style="color:var(--error)">*</span></label>
+                <input type="text" name="phone" class="form-control"
+                       th:value="${ef != null ? ef.phone : p.phone}" required/>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control"
+                       th:value="${ef != null ? ef.email : p.email}"/>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ</label>
+                <input type="text" name="address" class="form-control"
+                       th:value="${ef != null ? ef.address : p.address}"/>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
+                            th:selected="${(ef != null ? ef.status : p.status) == s}"></option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-modal-close>Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </template>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var reopenModal = /*[[${reopenModal}]]*/ null;
+    if (reopenModal) {
+        window.__reopenModal = reopenModal;
+    }
+    /*]]>*/
+</script>
+
+</th:block>
+</body>
+</html>

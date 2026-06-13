@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Hàng đợi khám', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tiếp đón và khám bệnh / Hàng đợi khám</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Hàng đợi khám</h2>
+            <p class="page-sub">Luồng bệnh nhân trong ngày <strong th:text="${#temporals.format(today, 'dd/MM/yyyy')}"></strong>.</p>
+        </div>
+        <form method="get" th:action="@{/clinical/queue}" class="inline-filter" th:if="${!isDoctor}">
+            <select name="doctorId" class="form-control" onchange="this.form.submit()">
+                <option value="">Tất cả bác sĩ</option>
+                <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
+                        th:selected="${doctorFilter == d.id}"></option>
+            </select>
+            <a th:href="@{/clinical/queue}" class="btn btn-ghost btn-sm">Xóa lọc</a>
+        </form>
+    </div>
+
+    <div class="kanban">
+        <!-- Cot: Dang cho kham -->
+        <section class="kanban-col">
+            <header class="kanban-col-head kanban-head-waiting">
+                <span class="kanban-col-title">
+                    <span class="kanban-dot"></span>Đang chờ khám
+                </span>
+                <span class="kanban-count" th:text="${#lists.size(waitingQueue)}">0</span>
+            </header>
+            <div class="kanban-body">
+                <article class="patient-card" th:each="c : ${waitingQueue}">
+                    <div class="patient-card-top">
+                        <span class="queue-number queue-number-sm" th:text="${c.queueNumber}"></span>
+                        <div class="patient-card-id">
+                            <span class="patient-card-name" th:text="${c.patient.fullName}"></span>
+                            <span class="patient-card-phone" th:text="${c.patient.phone}"></span>
+                        </div>
+                        <span class="badge badge-waiting" th:text="${c.status.label}"></span>
+                    </div>
+                    <dl class="patient-card-meta">
+                        <div><dt>Bác sĩ</dt><dd th:text="${c.appointment.doctor != null ? c.appointment.doctor.fullName : '—'}"></dd></div>
+                        <div><dt>Check-in</dt><dd th:text="${#temporals.format(c.checkinTime, 'HH:mm')}"></dd></div>
+                        <div><dt>Tình trạng</dt><dd th:text="${c.arrivalStatus.label}"></dd></div>
+                    </dl>
+                    <p class="patient-card-symptom" th:if="${c.initialSymptoms}" th:text="${c.initialSymptoms}"></p>
+                    <form method="post" th:action="@{/clinical/queue/{id}/start(id=${c.id})}" sec:authorize="hasAnyRole('ADMIN','DOCTOR')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-primary btn-block btn-sm">Bắt đầu khám</button>
+                    </form>
+                </article>
+                <div class="kanban-empty" th:if="${#lists.isEmpty(waitingQueue)}">
+                    <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                    <p>Không có bệnh nhân chờ khám.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cot: Dang kham -->
+        <section class="kanban-col">
+            <header class="kanban-col-head kanban-head-exam">
+                <span class="kanban-col-title">
+                    <span class="kanban-dot"></span>Đang khám
+                </span>
+                <span class="kanban-count" th:text="${#lists.size(inExamQueue)}">0</span>
+            </header>
+            <div class="kanban-body">
+                <article class="patient-card" th:each="c : ${inExamQueue}">
+                    <div class="patient-card-top">
+                        <span class="queue-number queue-number-sm queue-number-exam" th:text="${c.queueNumber}"></span>
+                        <div class="patient-card-id">
+                            <span class="patient-card-name" th:text="${c.patient.fullName}"></span>
+                            <span class="patient-card-phone" th:text="${c.patient.phone}"></span>
+                        </div>
+                        <span class="badge badge-in-exam" th:text="${c.status.label}"></span>
+                    </div>
+                    <dl class="patient-card-meta">
+                        <div><dt>Bác sĩ</dt><dd th:text="${c.appointment.doctor != null ? c.appointment.doctor.fullName : '—'}"></dd></div>
+                        <div><dt>Check-in</dt><dd th:text="${#temporals.format(c.checkinTime, 'HH:mm')}"></dd></div>
+                    </dl>
+                    <a th:href="@{/clinical/examination(sessionId=${sessionIdsByCheckin.get(c.id)})}"
+                       class="btn btn-secondary btn-block btn-sm" sec:authorize="hasAnyRole('ADMIN','DOCTOR')">Tiếp tục khám</a>
+                </article>
+                <div class="kanban-empty" th:if="${#lists.isEmpty(inExamQueue)}">
+                    <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                    <p>Không có bệnh nhân đang khám.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script></script>
+
+</th:block>
+</body>
+</html>

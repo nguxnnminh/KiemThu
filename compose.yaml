@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: smart-dental-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: smart_dental
+      MYSQL_USER: dental_user
+      MYSQL_PASSWORD: dental_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - smart_dental_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  smart_dental_data:

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Modal dung chung: them/sua/xac nhan. Noi dung form se duoc JS bom vao #appModalBody -->
+<div th:fragment="modal" id="appModalOverlay" class="modal-overlay">
+    <div id="appModal" class="modal-box" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h3 id="appModalTitle">Tieu de</h3>
+            <button type="button" class="modal-close" id="appModalClose" aria-label="Dong">&times;</button>
+        </div>
+        <div class="modal-body" id="appModalBody">
+            <!-- Noi dung form duoc chen vao day -->
+        </div>
+    </div>
+</div>
+
+<!-- Khung thong bao loi/thanh cong dung chung -->
+<div th:fragment="alerts" class="alert-area">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+</div>
+
+<!-- Mau form trong modal: dung lam template tham khao cho cac phan sau -->
+<template th:fragment="modalFormTemplate" id="sampleModalFormTemplate">
+    <form method="post" class="modal-form" th:action="@{/sample}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div class="form-group">
+            <label>Ten</label>
+            <input type="text" name="name" class="form-control" required/>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>Huy</button>
+            <button type="submit" class="btn btn-primary">Luu</button>
+        </div>
+    </form>
+</template>
+
+</body>
+</html>

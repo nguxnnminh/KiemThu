@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:replace="~{layout/main :: layout('Báo cáo lương năm', ~{::#content}, ~{::script})}">
+
+<div id="content">
+    <div class="breadcrumb">Tính lương bác sĩ / Báo cáo lương năm</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Báo cáo lương tất cả bác sĩ theo năm</h2>
+            <p class="page-sub" th:text="'Năm ' + ${year}"></p>
+        </div>
+        <a class="btn btn-secondary" th:href="@{/payroll/reports/yearly/export(year=${year})}">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Xuất Excel
+        </a>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);">
+        <form method="get" th:action="@{/payroll/reports/yearly}" class="toolbar">
+            <div class="filters">
+                <input type="number" name="year" class="form-control" placeholder="Năm" min="2000" max="2100"
+                       th:value="${year}" style="max-width:120px;"/>
+            </div>
+            <div class="filters">
+                <button type="submit" class="btn btn-secondary">Xem báo cáo</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-stats" style="margin-bottom:var(--space-4);">
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div>
+                <div class="card-stat-value"
+                     th:text="${!#lists.isEmpty(slips) ? #numbers.formatDecimal(#aggregates.sum(slips.![totalSalary]), 0, 'COMMA', 0, 'POINT') + ' đ' : '0 đ'}">0 đ</div>
+                <div class="card-stat-label">Tổng lương cả năm</div>
+            </div>
+        </div>
+        <div class="card-stat">
+            <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div>
+                <div class="card-stat-value" th:text="${#lists.size(slips)}">0</div>
+                <div class="card-stat-label">Số phiếu lương</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card chart-card" style="margin-bottom:var(--space-4);" th:if="${!#lists.isEmpty(slips)}">
+        <h3 class="card-section-title">Tổng lương theo tháng</h3>
+        <div class="chart-wrap"><canvas id="yearlyChart"></canvas></div>
+    </div>
+
+    <div class="card table-responsive">
+        <h3 class="card-section-title">Chi tiết phiếu lương</h3>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã phiếu</th>
+                <th>Bác sĩ</th>
+                <th>Mã bác sĩ</th>
+                <th>Tháng</th>
+                <th class="num">Tổng lương (đ)</th>
+                <th>Trạng thái</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${slips}">
+                <td th:text="${s.slipCode}"></td>
+                <td th:text="${s.doctor.fullName}"></td>
+                <td th:text="${s.doctor.employeeCode}"></td>
+                <td th:text="${s.payrollMonth}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td>
+                    <span class="badge badge-active" th:text="${s.status.label}"></span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(slips)}">
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                        <p>Không có phiếu lương đã duyệt nào trong năm này.</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script th:inline="javascript" th:if="${!#lists.isEmpty(slips)}">
+    /*<![CDATA[*/
+    var months = /*[[${slips.![payrollMonth]}]]*/ [];
+    var amounts = /*[[${slips.![totalSalary]}]]*/ [];
+    /*]]>*/
+    (function () {
+        var el = document.getElementById('yearlyChart');
+        if (!el) return;
+        var byMonth = new Array(12).fill(0);
+        for (var i = 0; i < months.length; i++) {
+            var m = parseInt(months[i], 10);
+            if (m >= 1 && m <= 12) byMonth[m - 1] += Number(amounts[i]) || 0;
+        }
+        function draw() {
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
+                    datasets: [{
+                        label: 'Tổng lương (đ)',
+                        data: byMonth,
+                        fill: true,
+                        backgroundColor: 'rgba(13, 148, 136, 0.12)',
+                        borderColor: '#0d9488',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: '#0d9488'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return new Intl.NumberFormat('vi-VN').format(v); } } } }
+                }
+            });
+        }
+        if (window.Chart) { draw(); return; }
+        var sc = document.createElement('script');
+        sc.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+        sc.onload = draw;
+        document.head.appendChild(sc);
+    })();
+</script>
+</th:block>
+</body>
+</html>
