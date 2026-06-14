@@ -113,6 +113,43 @@ public class RegisteredServiceManagementService {
     }
 
     @Transactional
+    public RegisteredService update(Long registeredServiceId, RegisteredServiceForm form) {
+        RegisteredService registeredService = registeredServiceRepository.findById(registeredServiceId)
+                .orElseThrow(() -> new BusinessException("Khong tim thay dich vu da dang ky."));
+        if (registeredService.getStatus() != RegisteredServiceStatus.ACTIVE) {
+            throw new BusinessException("Chi co the cap nhat dich vu dang hieu luc.");
+        }
+        if (registeredService.getTreatmentSession().getStatus() != TreatmentSessionStatus.OPEN) {
+            throw new BusinessException("Phien kham da ket thuc, khong the cap nhat dich vu.");
+        }
+        if (form.getQuantity() == null || form.getQuantity() < 1) {
+            throw new BusinessException("So luong phai lon hon 0.");
+        }
+
+        BigDecimal discount = form.getDiscountAmount() != null ? form.getDiscountAmount() : BigDecimal.ZERO;
+        if (discount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("So tien giam gia khong hop le.");
+        }
+
+        BigDecimal subtotal = registeredService.getUnitPrice().multiply(BigDecimal.valueOf(form.getQuantity()));
+        if (discount.compareTo(subtotal) > 0) {
+            throw new BusinessException("So tien giam gia khong duoc lon hon thanh tien.");
+        }
+
+        registeredService.setQuantity(form.getQuantity());
+        registeredService.setDiscountAmount(discount);
+        registeredService.setTotalAmount(subtotal.subtract(discount));
+        registeredService.setToothNumber(form.getToothNumber());
+        registeredService.setNote(form.getNote());
+        registeredServiceRepository.save(registeredService);
+
+        auditLogService.log("UPDATE_REGISTERED_SERVICE", "RegisteredService", String.valueOf(registeredService.getId()),
+                "Cap nhat dich vu " + registeredService.getServiceNameSnapshot()
+                        + " cua benh nhan " + registeredService.getPatient().getFullName());
+        return registeredService;
+    }
+
+    @Transactional
     public void cancel(Long registeredServiceId) {
         RegisteredService registeredService = registeredServiceRepository.findById(registeredServiceId)
                 .orElseThrow(() -> new BusinessException("Khong tim thay dich vu da dang ky."));

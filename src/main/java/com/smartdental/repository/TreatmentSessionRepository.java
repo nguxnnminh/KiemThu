@@ -28,7 +28,14 @@ public interface TreatmentSessionRepository extends JpaRepository<TreatmentSessi
 
     boolean existsByDoctorIdAndStatus(Long doctorId, TreatmentSessionStatus status);
 
-    List<TreatmentSession> findByPatientIdOrderByExaminationDateDesc(Long patientId);
+    /** Ho so benh an cua benh nhan (portal): chi cac phien da hoan tat, kem bac si + lich hen tai kham. */
+    @Query("select s from TreatmentSession s " +
+            "join fetch s.doctor join fetch s.medicalRecord " +
+            "left join fetch s.followUpAppointment " +
+            "where s.patient.id = :patientId " +
+            "and s.status = com.smartdental.enums.TreatmentSessionStatus.COMPLETED " +
+            "order by s.examinationDate desc, s.id desc")
+    List<TreatmentSession> findMedicalRecordForPatient(@Param("patientId") Long patientId);
 
     @Query("select s from TreatmentSession s join fetch s.patient join fetch s.doctor " +
             "where s.doctor.id = :doctorId order by s.examinationDate desc")

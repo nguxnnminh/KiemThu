@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Sơ đồ răng', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-clinical page-tooth-chart-lookup">
     <div class="breadcrumb">Tiếp đón và khám bệnh / Sơ đồ răng</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/clinical/tooth-chart}" class="toolbar">
             <div class="filters">
                 <input type="text" name="keyword" class="form-control" placeholder="Mã bệnh nhân, họ tên hoặc số điện thoại"
@@ -27,11 +27,11 @@
         </form>
     </div>
 
-    <div class="card" th:if="${notFound}" style="margin-bottom:var(--space-4);">
+    <div class="card mb-4" th:if="${notFound}">
         <div class="form-error">Không tìm thấy bệnh nhân được yêu cầu.</div>
     </div>
 
-    <div class="card table-responsive" th:if="${results != null}">
+    <div class="card table-card table-responsive" th:if="${results != null}">
         <table class="data-table">
             <thead>
             <tr>
@@ -47,8 +47,8 @@
                 <td th:text="${p.fullName}"></td>
                 <td th:text="${p.phone}"></td>
                 <td>
-                    <a th:href="@{/clinical/tooth-chart(patientId=${p.id})}" class="btn btn-primary" style="padding:4px 12px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:4px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <a th:href="@{/clinical/tooth-chart(patientId=${p.id})}" class="btn btn-primary btn-compact">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-ico"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         Xem sơ đồ răng
                     </a>
                 </td>

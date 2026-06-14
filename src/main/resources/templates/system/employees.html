@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Quản lý nhân viên', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-system page-employees">
     <div class="breadcrumb">Quản lý hệ thống / Quản lý nhân viên</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -18,7 +18,7 @@
         </button>
     </div>
 
-    <div class="card-stats" style="margin-bottom:var(--space-4);">
+    <div class="card-stats mb-4">
         <div class="card-stat">
             <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <div>
@@ -49,11 +49,11 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/system/employees}" class="toolbar">
             <div class="filters">
-                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo tên, mã, SĐT, email..."
-                       th:value="${keyword}" style="min-width:220px;"/>
+                <input type="text" name="keyword" class="form-control col-min-220" placeholder="Tìm theo tên, mã, SĐT, email..."
+                       th:value="${keyword}"/>
                 <select name="position" class="form-control">
                     <option value="">-- Tất cả chức vụ --</option>
                     <option th:each="p : ${positions}" th:value="${p}" th:text="${p.label}"
@@ -77,7 +77,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -157,12 +157,12 @@
 
     <!-- ===================== Modal: Them nhan vien ===================== -->
     <template id="addEmployeeModal" data-modal-title="Thêm nhân viên">
-        <form method="post" class="modal-form" th:action="@{/system/employees}" th:object="${employeeForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/employees}" th:object="${employeeForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Họ tên <span style="color:var(--error)">*</span></label>
+                <label>Họ tên <span class="req">*</span></label>
                 <input type="text" name="fullName" class="form-control" th:value="*{fullName}" required/>
             </div>
             <div class="form-group">
@@ -192,7 +192,7 @@
                 <input type="text" name="address" class="form-control" th:value="*{address}"/>
             </div>
             <div class="form-group">
-                <label>Chức vụ <span style="color:var(--error)">*</span></label>
+                <label>Chức vụ <span class="req">*</span></label>
                 <select name="position" class="form-control" required>
                     <option value="">-- Chọn chức vụ --</option>
                     <option th:each="p : ${positions}" th:value="${p}" th:text="${p.label}"
@@ -239,7 +239,7 @@
     <template th:each="emp : ${employees.content}" th:id="'editEmployeeModal-' + ${emp.id}"
               th:data-modal-title="'Sửa nhân viên: ' + ${emp.fullName}"
               th:with="ef=${editForms.get('editEmployeeForm-' + emp.id)}">
-        <form method="post" class="modal-form" th:action="@{/system/employees/{id}(id=${emp.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/employees/{id}(id=${emp.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
@@ -248,7 +248,7 @@
                 <input type="text" class="form-control" th:value="${emp.employeeCode}" disabled/>
             </div>
             <div class="form-group">
-                <label>Họ tên <span style="color:var(--error)">*</span></label>
+                <label>Họ tên <span class="req">*</span></label>
                 <input type="text" name="fullName" class="form-control"
                        th:value="${ef != null ? ef.fullName : emp.fullName}" required/>
             </div>
@@ -281,7 +281,7 @@
                        th:value="${ef != null ? ef.address : emp.address}"/>
             </div>
             <div class="form-group">
-                <label>Chức vụ <span style="color:var(--error)">*</span></label>
+                <label>Chức vụ <span class="req">*</span></label>
                 <select name="position" class="form-control" required>
                     <option th:each="p : ${positions}" th:value="${p}" th:text="${p.label}"
                             th:selected="${(ef != null ? ef.position : emp.position) == p}"></option>
@@ -329,12 +329,12 @@
     <!-- ===================== Modal: Tam khoa nhan vien ===================== -->
     <template th:each="emp : ${employees.content}" th:id="'suspendEmployeeModal-' + ${emp.id}"
               th:data-modal-title="'Tạm khóa nhân viên: ' + ${emp.fullName}">
-        <form method="post" class="modal-form" th:action="@{/system/employees/{id}/suspend(id=${emp.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/employees/{id}/suspend(id=${emp.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
             <p>Bạn có chắc chắn muốn tạm khóa nhân viên <strong th:text="${emp.fullName}"></strong> không?</p>
             <div class="form-group">
-                <label>Lý do <span style="color:var(--error)">*</span></label>
+                <label>Lý do <span class="req">*</span></label>
                 <textarea name="reason" class="form-control" required></textarea>
             </div>
             <div class="modal-footer">
@@ -347,13 +347,13 @@
     <!-- ===================== Modal: Cho nghi viec ===================== -->
     <template th:each="emp : ${employees.content}" th:id="'deactivateEmployeeModal-' + ${emp.id}"
               th:data-modal-title="'Cho nhân viên nghỉ việc: ' + ${emp.fullName}">
-        <form method="post" class="modal-form" th:action="@{/system/employees/{id}/deactivate(id=${emp.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/employees/{id}/deactivate(id=${emp.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
             <p>Bạn có chắc chắn muốn cho nhân viên <strong th:text="${emp.fullName}"></strong> nghỉ việc không?
                Nếu nhân viên có tài khoản đăng nhập, tài khoản sẽ bị khóa.</p>
             <div class="form-group">
-                <label>Lý do <span style="color:var(--error)">*</span></label>
+                <label>Lý do <span class="req">*</span></label>
                 <textarea name="reason" class="form-control" required></textarea>
             </div>
             <div class="modal-footer">

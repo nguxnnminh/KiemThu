@@ -48,7 +48,8 @@ public class InvoiceController {
         model.addAttribute("statusFilter", status);
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", toDate);
-        model.addAttribute("statuses", java.util.List.of(InvoiceStatus.UNPAID, InvoiceStatus.PAID, InvoiceStatus.CANCELLED));
+        model.addAttribute("statuses", java.util.List.of(
+                InvoiceStatus.UNPAID, InvoiceStatus.PARTIAL, InvoiceStatus.PAID, InvoiceStatus.CANCELLED));
         return "clinical/invoices";
     }
 

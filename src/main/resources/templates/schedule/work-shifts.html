@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Quản lý ca làm việc', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-schedule page-work-shifts">
     <div class="breadcrumb">Quản lý lịch khám / Ca làm việc</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -18,11 +18,11 @@
         </button>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/schedule/work-shifts}" class="toolbar">
             <div class="filters">
-                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã, tên ca..."
-                       th:value="${keyword}" style="min-width:220px;"/>
+                <input type="text" name="keyword" class="form-control col-min-220" placeholder="Tìm theo mã, tên ca..."
+                       th:value="${keyword}"/>
                 <select name="status" class="form-control">
                     <option value="">-- Tất cả trạng thái --</option>
                     <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"
@@ -41,7 +41,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -120,20 +120,20 @@
 
     <!-- ===================== Modal: Them ca lam viec ===================== -->
     <template id="addWorkShiftModal" data-modal-title="Thêm ca làm việc">
-        <form method="post" class="modal-form" th:action="@{/schedule/work-shifts}" th:object="${workShiftForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/schedule/work-shifts}" th:object="${workShiftForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Tên ca <span style="color:var(--error)">*</span></label>
+                <label>Tên ca <span class="req">*</span></label>
                 <input type="text" name="name" class="form-control" th:value="*{name}" required/>
             </div>
             <div class="form-group">
-                <label>Giờ bắt đầu <span style="color:var(--error)">*</span></label>
+                <label>Giờ bắt đầu <span class="req">*</span></label>
                 <input type="time" name="startTime" class="form-control" th:value="*{startTime}" required/>
             </div>
             <div class="form-group">
-                <label>Giờ kết thúc <span style="color:var(--error)">*</span></label>
+                <label>Giờ kết thúc <span class="req">*</span></label>
                 <input type="time" name="endTime" class="form-control" th:value="*{endTime}" required/>
             </div>
             <div class="form-group">
@@ -166,7 +166,7 @@
     <template th:each="ws : ${workShifts.content}" th:id="'editWorkShiftModal-' + ${ws.id}"
               th:data-modal-title="'Sửa ca làm việc: ' + ${ws.name}"
               th:with="ef=${editForms.get('editWorkShiftForm-' + ws.id)}">
-        <form method="post" class="modal-form" th:action="@{/schedule/work-shifts/{id}(id=${ws.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/schedule/work-shifts/{id}(id=${ws.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
@@ -175,17 +175,17 @@
                 <input type="text" class="form-control" th:value="${ws.shiftCode}" disabled/>
             </div>
             <div class="form-group">
-                <label>Tên ca <span style="color:var(--error)">*</span></label>
+                <label>Tên ca <span class="req">*</span></label>
                 <input type="text" name="name" class="form-control"
                        th:value="${ef != null ? ef.name : ws.name}" required/>
             </div>
             <div class="form-group">
-                <label>Giờ bắt đầu <span style="color:var(--error)">*</span></label>
+                <label>Giờ bắt đầu <span class="req">*</span></label>
                 <input type="time" name="startTime" class="form-control"
                        th:value="${ef != null ? ef.startTime : ws.startTime}" required/>
             </div>
             <div class="form-group">
-                <label>Giờ kết thúc <span style="color:var(--error)">*</span></label>
+                <label>Giờ kết thúc <span class="req">*</span></label>
                 <input type="time" name="endTime" class="form-control"
                        th:value="${ef != null ? ef.endTime : ws.endTime}" required/>
             </div>

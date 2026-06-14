@@ -7,6 +7,7 @@ import com.smartdental.entity.User;
 import com.smartdental.enums.AppointmentSource;
 import com.smartdental.enums.AppointmentStatus;
 import com.smartdental.exception.BusinessException;
+import com.smartdental.repository.TreatmentSessionRepository;
 import com.smartdental.repository.UserRepository;
 import com.smartdental.service.AppointmentService;
 import com.smartdental.service.DentalServiceManagementService;
@@ -44,6 +45,7 @@ public class PatientPortalController {
     private final WorkShiftService workShiftService;
     private final UserRepository userRepository;
     private final InvoiceService invoiceService;
+    private final TreatmentSessionRepository treatmentSessionRepository;
 
     @GetMapping("/patient/book-appointment")
     public String bookForm(Model model) {
@@ -112,6 +114,16 @@ public class PatientPortalController {
             result.put(day, GridLayoutUtil.layout(dayEvents));
         }
         return result;
+    }
+
+    @GetMapping("/patient/treatment-history")
+    public String myMedicalRecord(Authentication authentication, Model model) {
+        User user = userRepository.findByUsernameIgnoreCaseFetchEmployeeAndPatient(authentication.getName())
+                .orElse(null);
+        Long patientId = (user != null && user.getPatient() != null) ? user.getPatient().getId() : -1L;
+        model.addAttribute("patient", user != null ? user.getPatient() : null);
+        model.addAttribute("sessions", treatmentSessionRepository.findMedicalRecordForPatient(patientId));
+        return "patient/medical-record";
     }
 
     @GetMapping("/patient/invoices")

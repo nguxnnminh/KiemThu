@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Báo cáo lương tháng', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-monthly-report">
     <div class="breadcrumb">Tính lương bác sĩ / Báo cáo lương tháng</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -19,7 +19,7 @@
         </a>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/payroll/reports/monthly}" class="toolbar">
             <div class="filters">
                 <input type="number" name="year" class="form-control" placeholder="Năm" min="2000" max="2100"
@@ -34,7 +34,7 @@
     </div>
 
     <!-- KPI row -->
-    <div class="card-stats" style="margin-bottom:var(--space-4);">
+    <div class="card-stats mb-4">
         <div class="card-stat">
             <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
             <div>
@@ -63,12 +63,12 @@
     </div>
 
     <!-- Bieu do luong theo bac si -->
-    <div class="card chart-card" style="margin-bottom:var(--space-4);" th:if="${!#lists.isEmpty(slips)}">
+    <div class="card chart-card mb-4" th:if="${!#lists.isEmpty(slips)}">
         <h3 class="card-section-title">Lương theo bác sĩ</h3>
         <div class="chart-wrap"><canvas id="salaryChart"></canvas></div>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <h3 class="card-section-title">Chi tiết phiếu lương</h3>
         <table class="data-table">
             <thead>
@@ -76,7 +76,7 @@
                 <th>Mã phiếu</th>
                 <th>Bác sĩ</th>
                 <th>Mã bác sĩ</th>
-                <th class="num">Tổng lương (đ)</th>
+                <th class="num amount">Tổng lương (đ)</th>
                 <th>Trạng thái</th>
             </tr>
             </thead>
@@ -85,7 +85,7 @@
                 <td th:text="${s.slipCode}"></td>
                 <td th:text="${s.doctor.fullName}"></td>
                 <td th:text="${s.doctor.employeeCode}"></td>
-                <td class="num" th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
+                <td class="num amount" th:text="${#numbers.formatDecimal(s.totalSalary, 0, 'COMMA', 0, 'POINT')}"></td>
                 <td>
                     <span class="badge"
                           th:classappend="${s.status.name() == 'APPROVED'} ? 'badge-active' : (${s.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-pending')"

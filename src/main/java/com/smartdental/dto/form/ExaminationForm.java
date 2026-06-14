@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * Du lieu kham benh: trieu chung, chan doan, ke hoach dieu tri (UC3.2).
@@ -24,4 +25,11 @@ public class ExaminationForm {
      */
     private BigDecimal complexCaseCoefficient;
     private String complexCaseReason;
+
+    /**
+     * Lich hen kham lai (tai kham): bac si tich co/khong khi hoan tat phien kham.
+     * Neu co, he thong tu tao lich hen tai kham (mac dinh 1 thang sau) cho benh nhan + phong kham.
+     */
+    private boolean followUp;
+    private LocalDate followUpDate;
 }

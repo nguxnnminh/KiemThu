@@ -42,6 +42,7 @@ public class ExaminationService {
     private final AuditLogService auditLogService;
     private final InvoiceService invoiceService;
     private final ComplexCaseCoefficientService complexCaseCoefficientService;
+    private final AppointmentService appointmentService;
 
     @Transactional(readOnly = true)
     public List<VisitCheckin> findQueue(LocalDate date, Long doctorId) {
@@ -196,6 +197,21 @@ public class ExaminationService {
                 && (complexCaseCoefficient.compareTo(MIN_COMPLEX_CASE_COEFFICIENT) < 0
                     || complexCaseCoefficient.compareTo(MAX_COMPLEX_CASE_COEFFICIENT) > 0)) {
             throw new BusinessException("He so ca phuc tap phai trong khoang tu 0.1 den 0.5.");
+        }
+
+        // Lich hen tai kham (tai kham): bac si tich co/khong khi hoan tat phien kham.
+        if (form.isFollowUp()) {
+            LocalDate followUpDate = form.getFollowUpDate();
+            if (followUpDate == null) {
+                throw new BusinessException("Vui long chon ngay kham lai cho lich hen tai kham.");
+            }
+            Appointment followUp = appointmentService.createFollowUp(
+                    session.getPatient(),
+                    session.getDoctor(),
+                    session.getAppointment() != null ? session.getAppointment().getService() : null,
+                    followUpDate);
+            session.setFollowUpDate(followUpDate);
+            session.setFollowUpAppointment(followUp);
         }
 
         session.setStatus(TreatmentSessionStatus.COMPLETED);

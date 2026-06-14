@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Đăng nhập - Smart Dental</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}"/>
+    <link rel="shortcut icon" type="image/svg+xml" th:href="@{/favicon.svg}"/>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
-<body class="login-body">
+<body class="login-body page-auth page-login">
     <div class="login-split">
 
         <!-- Panel trái: thương hiệu -->
@@ -34,7 +35,7 @@
 
         <!-- Panel phải: form đăng nhập -->
         <div class="login-panel">
-            <div class="login-box">
+            <div class="login-box auth-card form-card">
                 <div class="login-logo">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true">
                         <rect width="32" height="32" rx="6" fill="#0d9488"/>
@@ -44,14 +45,14 @@
                 <h1 class="login-title">Chào mừng trở lại</h1>
                 <p class="login-subtitle">Đăng nhập để tiếp tục quản lý phòng khám</p>
 
-                <div class="alert alert-error" th:if="${param.error}">
+                <div class="alert alert-error app-alert" th:if="${param.error}">
                     Sai tên đăng nhập hoặc mật khẩu, hoặc tài khoản đã bị khóa.
                 </div>
-                <div class="alert alert-success" th:if="${param.logout}">
+                <div class="alert alert-success app-alert" th:if="${param.logout}">
                     Bạn đã đăng xuất thành công.
                 </div>
 
-                <form th:action="@{/login}" method="post" class="login-form">
+                <form th:action="@{/login}" method="post" class="login-form form-section">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <div class="form-group">
                         <label for="username">Tên đăng nhập</label>

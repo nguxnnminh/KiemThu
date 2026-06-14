@@ -6,10 +6,21 @@ document.addEventListener("DOMContentLoaded", function () {
     var sidebar = document.getElementById("sidebar");
 
     var overlay = document.getElementById("sidebarOverlay");
+    var sidebarStorageKey = "smartDentalSidebarCollapsed";
 
     function closeMobileSidebar() {
         if (sidebar) sidebar.classList.remove("show");
         if (overlay) overlay.classList.remove("show");
+    }
+
+    if (sidebar && window.innerWidth > 900) {
+        try {
+            if (localStorage.getItem(sidebarStorageKey) === "true") {
+                sidebar.classList.add("collapsed");
+            }
+        } catch (ignored) {
+            // localStorage can be unavailable in private contexts.
+        }
     }
 
     if (toggleBtn && sidebar) {
@@ -19,6 +30,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (overlay) overlay.classList.toggle("show", opened);
             } else {
                 sidebar.classList.toggle("collapsed");
+                try {
+                    localStorage.setItem(sidebarStorageKey, sidebar.classList.contains("collapsed") ? "true" : "false");
+                } catch (ignored) {
+                    // no-op
+                }
             }
         });
     }
@@ -29,6 +45,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Accordion menu: bam tieu de nhom de mo/dong; tu dong dong nhom khac
     var groups = Array.prototype.slice.call(document.querySelectorAll(".sidebar .menu-group"));
+    function syncAccordionState() {
+        groups.forEach(function (group) {
+            var header = group.querySelector("[data-accordion]");
+            if (header) {
+                header.setAttribute("aria-expanded", group.classList.contains("open") ? "true" : "false");
+            }
+        });
+    }
+    syncAccordionState();
     groups.forEach(function (group) {
         var header = group.querySelector("[data-accordion]");
         if (!header) return;
@@ -36,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
             var wasOpen = group.classList.contains("open");
             groups.forEach(function (g) { g.classList.remove("open"); });
             if (!wasOpen) group.classList.add("open");
+            syncAccordionState();
         });
     });
 
@@ -45,6 +71,42 @@ document.addEventListener("DOMContentLoaded", function () {
             if (window.innerWidth <= 900) closeMobileSidebar();
         });
     });
+
+    // Quick search only filters visible navigation/dashboard items on the client.
+    var quickSearch = document.querySelector(".topbar-search input");
+    if (quickSearch) {
+        quickSearch.addEventListener("input", function () {
+            var query = quickSearch.value.trim().toLowerCase();
+            quickSearch.classList.toggle("is-searching", query.length > 0);
+
+            document.querySelectorAll(".sidebar .menu-group").forEach(function (group) {
+                var links = Array.prototype.slice.call(group.querySelectorAll(".menu-list li"));
+                var anyVisible = false;
+                links.forEach(function (li) {
+                    var text = li.textContent.toLowerCase();
+                    var match = !query || text.indexOf(query) !== -1;
+                    li.classList.toggle("search-hidden", !match);
+                    anyVisible = anyVisible || match;
+                });
+                group.classList.toggle("search-hidden", !!query && !anyVisible);
+                if (query && anyVisible) group.classList.add("open");
+            });
+            syncAccordionState();
+
+            document.querySelectorAll(".dash-card").forEach(function (card) {
+                var match = !query || card.textContent.toLowerCase().indexOf(query) !== -1;
+                card.classList.toggle("search-hidden", !match);
+            });
+        });
+
+        quickSearch.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                quickSearch.value = "";
+                quickSearch.dispatchEvent(new Event("input"));
+                quickSearch.blur();
+            }
+        });
+    }
 
     // Ngay hien tai tren hero dashboard
     var heroDate = document.getElementById("heroDate");
@@ -60,12 +122,24 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".alert").forEach(function (alertEl) {
         setTimeout(function () {
             alertEl.style.transition = "opacity 0.4s ease";
+            alertEl.classList.add("is-leaving");
             alertEl.style.opacity = "0";
             setTimeout(function () {
                 alertEl.remove();
             }, 400);
         }, 4000);
     });
+
+    // Lightweight submit feedback. It does not alter submitted data.
+    document.addEventListener("submit", function (event) {
+        var form = event.target;
+        if (!form || form.hasAttribute("data-no-submit-feedback")) return;
+        var submitter = form.querySelector("button[type='submit'], input[type='submit']");
+        if (submitter) {
+            submitter.classList.add("is-submitting");
+            submitter.setAttribute("aria-busy", "true");
+        }
+    }, true);
 
     // Tu dong mo lai modal khi co loi nghiep vu sau khi submit form (PRG pattern)
     var reopenId = window.__reopenModal || window.__reopenModal2;

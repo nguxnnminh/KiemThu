@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Dịch vụ điều trị', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-clinical page-registered-services">
     <div class="breadcrumb">Tiếp đón và khám bệnh / Dịch vụ điều trị</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -19,8 +19,8 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);" th:if="${examSession.status.name() == 'OPEN'}">
-        <div class="page-header" style="margin-bottom:var(--space-2);">
+    <div class="card filter-card mb-4" th:if="${examSession.status.name() == 'OPEN'}">
+        <div class="page-header mb-2">
             <h3 class="card-section-title">Đăng ký dịch vụ mới</h3>
         </div>
         <form method="post" th:action="@{/clinical/services}" th:object="${registeredServiceForm}">
@@ -29,7 +29,7 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Dịch vụ <span style="color:var(--error)">*</span></label>
+                    <label>Dịch vụ <span class="req">*</span></label>
                     <select name="serviceId" class="form-control" required>
                         <option value="">-- Chọn dịch vụ --</option>
                         <option th:each="s : ${dentalServices}" th:value="${s.id}"
@@ -39,7 +39,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Số lượng <span style="color:var(--error)">*</span></label>
+                    <label>Số lượng <span class="req">*</span></label>
                     <input type="number" name="quantity" class="form-control" min="1" value="1" required/>
                 </div>
                 <div class="form-group">
@@ -61,8 +61,8 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
-        <div class="page-header" style="margin-bottom:var(--space-2);">
+    <div class="card table-card table-responsive">
+        <div class="page-header mb-2">
             <h3 class="card-section-title">Danh sách dịch vụ đã đăng ký</h3>
         </div>
         <table class="data-table">
@@ -94,12 +94,23 @@
                           th:text="${r.status.label}"></span>
                 </td>
                 <td>
+                    <form method="post" th:action="@{/clinical/services/{id}(id=${r.id})}"
+                          th:if="${r.status.name() == 'ACTIVE' and examSession.status.name() == 'OPEN'}"
+                          style="display:grid; gap:6px; min-width:180px; margin-bottom:6px;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="sessionId" th:value="${examSession.id}"/>
+                        <input type="number" name="quantity" class="form-control" min="1" th:value="${r.quantity}" required/>
+                        <input type="number" name="discountAmount" class="form-control" min="0" step="1000" th:value="${r.discountAmount}"/>
+                        <input type="number" name="toothNumber" class="form-control" min="11" max="48" th:value="${r.toothNumber}"/>
+                        <textarea name="note" class="form-control" rows="2" th:text="${r.note}"></textarea>
+                        <button type="submit" class="btn btn-secondary btn-compact">Cập nhật</button>
+                    </form>
                     <form method="post" th:action="@{/clinical/services/{id}/cancel(id=${r.id})}"
                           th:if="${r.status.name() == 'ACTIVE' and examSession.status.name() == 'OPEN'}"
                           onsubmit="return confirm('Xác nhận hủy dịch vụ này?');">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <input type="hidden" name="sessionId" th:value="${examSession.id}"/>
-                        <button type="submit" class="btn btn-secondary btn-icon-danger" style="padding:4px 12px;">Hủy</button>
+                        <button type="submit" class="btn btn-secondary btn-icon-danger btn-compact">Hủy</button>
                     </form>
                 </td>
             </tr>

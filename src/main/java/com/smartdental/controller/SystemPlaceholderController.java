@@ -14,8 +14,7 @@ public class SystemPlaceholderController {
     @GetMapping({
             "/coming-soon",
             "/account/profile",
-            "/account/audit-logs",
-            "/patient/treatment-history"
+            "/account/audit-logs"
     })
     public String comingSoon(Model model) {
         model.addAttribute("message", "Chức năng này sẽ được triển khai ở phần sau.");

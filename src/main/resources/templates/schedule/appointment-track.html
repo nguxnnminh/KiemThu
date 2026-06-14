@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Theo dõi lịch khám', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-schedule page-appointment-track">
     <div class="breadcrumb">Quản lý lịch khám / Theo dõi lịch khám</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -13,7 +13,7 @@
         <p class="page-sub">Theo dõi trạng thái các lịch hẹn khám.</p>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/schedule/appointments/track}" class="toolbar">
             <div class="filters">
                 <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã, tên bệnh nhân..."
@@ -80,7 +80,7 @@
                   th:with="a=${pos.event}"
                   th:id="'trackStatusModal-' + ${pos.event.id}"
                   th:data-modal-title="'Cập nhật trạng thái: ' + ${pos.event.appointmentCode}">
-            <form method="post" class="modal-form" th:action="@{/schedule/appointments/{id}/track-status(id=${a.id})}">
+            <form method="post" class="modal-form form-section" th:action="@{/schedule/appointments/{id}/track-status(id=${a.id})}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
@@ -89,7 +89,7 @@
                     <input type="text" class="form-control" th:value="${a.status.label}" disabled/>
                 </div>
                 <div class="form-group">
-                    <label>Trạng thái mới <span style="color:var(--error)">*</span></label>
+                    <label>Trạng thái mới <span class="req">*</span></label>
                     <select name="status" class="form-control" required>
                         <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"></option>
                     </select>

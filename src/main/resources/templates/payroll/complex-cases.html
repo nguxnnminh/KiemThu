@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Hệ số ca phức tạp', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-complex-cases">
     <div class="breadcrumb">Tính lương bác sĩ / Hệ số ca phức tạp</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/payroll/complex-cases}" class="toolbar">
             <div class="filters">
                 <select name="status" class="form-control">
@@ -31,7 +31,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -100,12 +100,12 @@
     <template th:each="c : ${coefficients.content}" th:if="${c.status.name() == 'PENDING'}"
               th:id="'rejectCcModal-' + ${c.id}"
               th:data-modal-title="'Từ chối hệ số: ' + ${c.coefficientCode}">
-        <form method="post" class="modal-form" th:action="@{/payroll/complex-cases/{id}/reject(id=${c.id})}" th:object="${decisionForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/payroll/complex-cases/{id}/reject(id=${c.id})}" th:object="${decisionForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Lý do từ chối <span style="color:var(--error)">*</span></label>
+                <label>Lý do từ chối <span class="req">*</span></label>
                 <textarea name="rejectReason" class="form-control" required th:text="*{rejectReason}"></textarea>
             </div>
 

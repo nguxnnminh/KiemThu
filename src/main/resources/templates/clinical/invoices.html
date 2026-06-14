@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Hóa đơn', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-clinical page-invoices">
     <div class="breadcrumb">Tiếp đón và khám bệnh / Hóa đơn</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="card-stats" style="margin-bottom:var(--space-4);">
+    <div class="card-stats mb-4">
         <div class="card-stat">
             <div class="card-stat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
             <div>
@@ -46,7 +46,7 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/clinical/invoices}" class="toolbar">
             <div class="filters">
                 <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã HĐ, tên, SĐT bệnh nhân..."
@@ -66,7 +66,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -96,12 +96,12 @@
                 <td th:text="${#numbers.formatDecimal(i.remainingAmount, 0, 'COMMA', 0, 'POINT')}"></td>
                 <td>
                     <span class="badge"
-                          th:classappend="${i.remainingAmount.compareTo(T(java.math.BigDecimal).ZERO) == 0 and i.status.name() != 'CANCELLED'} ? 'badge-paid' : (${i.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-unpaid')"
-                          th:text="${i.remainingAmount.compareTo(T(java.math.BigDecimal).ZERO) == 0 and i.status.name() != 'CANCELLED'} ? 'Đã thanh toán' : (${i.status.name() == 'CANCELLED'} ? 'Đã hủy' : 'Chưa thanh toán')"></span>
+                          th:classappend="${i.status.name() == 'PAID'} ? 'badge-paid' : (${i.status.name() == 'CANCELLED'} ? 'badge-cancelled' : 'badge-unpaid')"
+                          th:text="${i.status.label}"></span>
                 </td>
                 <td>
-                    <a th:href="@{/clinical/invoices/{id}(id=${i.id})}" class="btn btn-secondary" style="padding:4px 12px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <a th:href="@{/clinical/invoices/{id}(id=${i.id})}" class="btn btn-secondary btn-compact">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-ico"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         Chi tiết
                     </a>
                 </td>

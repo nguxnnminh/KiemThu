@@ -19,14 +19,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title th:text="${title} + ' - Smart Dental'">Smart Dental</title>
         <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}"/>
+        <link rel="shortcut icon" type="image/svg+xml" th:href="@{/favicon.svg}"/>
         <link rel="stylesheet" th:href="@{/css/app.css}"/>
     </head>
     <body>
         <div th:replace="~{layout/header :: header}" th:with="pageTitle=${title}"></div>
-        <div class="app-container">
+        <div class="app-container app-shell">
             <div th:replace="~{layout/sidebar :: sidebar}"></div>
             <div class="sidebar-overlay" id="sidebarOverlay"></div>
-            <main class="content">
+            <main class="content app-content" role="main">
                 <div th:replace="${content}"></div>
             </main>
         </div>

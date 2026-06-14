@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{layout/main :: layout('Hồ sơ bệnh án', ~{::#content}, ~{::script})}">
+
+<div id="content" class="page-shell module-patient page-patient-medical-record">
+    <div class="breadcrumb">Dịch vụ của tôi / Hồ sơ bệnh án</div>
+
+    <div th:replace="~{layout/fragments :: alerts}"></div>
+
+    <div class="page-header">
+        <div>
+            <h2>Hồ sơ bệnh án <span class="count-chip" th:text="${#lists.size(sessions)} + ' lần khám'">0</span></h2>
+            <p class="page-sub">Chi tiết các lần khám của bạn: triệu chứng, chẩn đoán, kế hoạch điều trị và ghi chú của bác sĩ.</p>
+        </div>
+    </div>
+
+    <div class="card filter-card mb-4" th:if="${patient != null}">
+        <h3 class="card-section-title">Thông tin bệnh nhân</h3>
+        <dl class="kv-list">
+            <div><dt>Họ tên</dt><dd th:text="${patient.fullName}"></dd></div>
+            <div><dt>Mã bệnh nhân</dt><dd th:text="${patient.patientCode}"></dd></div>
+            <div><dt>Giới tính</dt><dd th:text="${patient.gender != null ? patient.gender.label : '-'}"></dd></div>
+            <div><dt>Ngày sinh</dt><dd th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'dd/MM/yyyy') : '-'}"></dd></div>
+            <div><dt>SĐT</dt><dd th:text="${patient.phone ?: '-'}"></dd></div>
+        </dl>
+    </div>
+
+    <!-- Chi tiet tung lan kham -->
+    <div class="card mb-4" th:each="s : ${sessions}">
+        <div class="page-header mb-2">
+            <div>
+                <h3 class="card-section-title" style="margin-bottom:2px;">
+                    Lần khám ngày <span th:text="${#temporals.format(s.examinationDate, 'dd/MM/yyyy')}"></span>
+                </h3>
+                <p class="page-sub" th:text="|Mã phiên: ${s.sessionCode} — Bác sĩ: ${s.doctor.fullName}|"></p>
+            </div>
+            <span class="badge badge-completed" th:text="${s.status.label}"></span>
+        </div>
+        <dl class="kv-list">
+            <div><dt>Triệu chứng</dt><dd th:text="${s.symptom ?: '-'}"></dd></div>
+            <div><dt>Chẩn đoán</dt><dd th:text="${s.diagnosis ?: '-'}"></dd></div>
+            <div><dt>Kế hoạch điều trị</dt><dd th:text="${s.treatmentPlan ?: '-'}"></dd></div>
+            <div><dt>Ghi chú bác sĩ</dt><dd th:text="${s.doctorNote ?: '-'}"></dd></div>
+            <div th:if="${s.followUpDate != null}">
+                <dt>Lịch hẹn tái khám</dt>
+                <dd>
+                    <span th:text="${#temporals.format(s.followUpDate, 'dd/MM/yyyy')}"></span>
+                    <span th:if="${s.followUpAppointment != null}" class="badge badge-pending"
+                          th:text="${s.followUpAppointment.status.label}"></span>
+                </dd>
+            </div>
+        </dl>
+    </div>
+
+    <div class="card" th:if="${#lists.isEmpty(sessions)}">
+        <div class="empty-state">
+            <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+            <p>Bạn chưa có lần khám nào được hoàn tất.</p>
+        </div>
+    </div>
+</div>
+
+<script></script>
+
+</th:block>
+</body>
+</html>

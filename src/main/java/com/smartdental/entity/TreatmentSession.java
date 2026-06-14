@@ -73,4 +73,13 @@ public class TreatmentSession extends BaseEntity {
 
     @Column(name = "difficult_coefficient", precision = 5, scale = 2)
     private BigDecimal difficultCoefficient;
+
+    /** Ngay hen kham lai (tai kham) bac si chon khi hoan tat phien kham. */
+    @Column(name = "follow_up_date")
+    private LocalDate followUpDate;
+
+    /** Lich hen tai kham duoc tao tu dong tu phien kham nay (neu co). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follow_up_appointment_id")
+    private Appointment followUpAppointment;
 }

@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Lịch hẹn của tôi', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-patient page-patient-appointments">
     <div class="breadcrumb">Dịch vụ của tôi / Lịch hẹn của tôi</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -13,7 +13,7 @@
         <p class="page-sub">Danh sách các lịch hẹn khám đã đặt.</p>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/patient/appointments}" class="toolbar">
             <div class="filters">
                 <select name="status" class="form-control">

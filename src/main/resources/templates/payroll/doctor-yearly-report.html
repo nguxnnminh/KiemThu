@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Báo cáo lương bác sĩ theo năm', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-doctor-yearly-report">
     <div class="breadcrumb">Tính lương bác sĩ / Báo cáo lương bác sĩ theo năm</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -20,7 +20,7 @@
         </a>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/payroll/reports/doctor-yearly}" class="toolbar">
             <div class="filters">
                 <select name="doctorId" class="form-control">
@@ -37,7 +37,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive" th:if="${doctor != null}">
+    <div class="card table-card table-responsive" th:if="${doctor != null}">
         <table class="data-table">
             <thead>
             <tr>

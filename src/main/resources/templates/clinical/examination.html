@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Khám bệnh', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-clinical page-examination">
     <div class="breadcrumb">Tiếp đón và khám bệnh / Khám bệnh</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -75,7 +75,7 @@
             <div class="exam-layout">
                 <!-- Cot trai: form kham -->
                 <div class="exam-main">
-                    <div class="card">
+                    <div class="card form-card">
                         <h3 class="card-section-title">Khám bệnh</h3>
                         <form method="post" th:action="@{/clinical/examination/{id}/complete(id=${examSession.id})}" th:object="${examinationForm}"
                               th:attr="data-readonly=${examSession.status.name() != 'OPEN'}"
@@ -90,7 +90,7 @@
                                           th:disabled="${examSession.status.name() != 'OPEN'}" th:text="*{symptom}"></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Chẩn đoán <span style="color:var(--error)">*</span></label>
+                                <label>Chẩn đoán <span class="req">*</span></label>
                                 <textarea name="diagnosis" class="form-control" rows="3"
                                           th:disabled="${examSession.status.name() != 'OPEN'}" th:text="*{diagnosis}"></textarea>
                             </div>
@@ -106,7 +106,7 @@
                             </div>
 
                             <div class="complex-case-card" th:if="${examSession.status.name() == 'OPEN'}">
-                                <h4 style="margin:0 0 var(--space-2) 0;">Hệ số ca phức tạp</h4>
+                                <h4>Hệ số ca phức tạp</h4>
                                 <div class="form-grid">
                                     <div class="form-group">
                                         <label>Hệ số (0.1 - 0.5)</label>
@@ -121,8 +121,33 @@
                                 <p class="form-hint">Hệ số ca khó sẽ được gửi duyệt khi hoàn tất khám.</p>
                             </div>
 
+                            <div class="complex-case-card" th:if="${examSession.status.name() == 'OPEN'}">
+                                <h4>Lịch hẹn khám lại (tái khám)</h4>
+                                <div class="form-group">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" name="followUp" id="exam-followUp" value="true"/>
+                                        Hẹn bệnh nhân khám lại
+                                    </label>
+                                </div>
+                                <div class="form-group" id="exam-followUpDateGroup" style="display:none;">
+                                    <label>Ngày khám lại <span class="req">*</span></label>
+                                    <input type="date" name="followUpDate" id="exam-followUpDate" class="form-control"
+                                           th:value="${followUpDefaultDate}"/>
+                                    <p class="form-hint">Mặc định 1 tháng sau. Lịch hẹn tái khám sẽ tự động được tạo cho bệnh nhân và phòng khám khi hoàn tất khám.</p>
+                                </div>
+                            </div>
+
+                            <div class="complex-case-card" th:if="${examSession.status.name() == 'COMPLETED' and examSession.followUpDate != null}">
+                                <h4>Lịch hẹn khám lại (tái khám)</h4>
+                                <p>Ngày khám lại: <strong th:text="${#temporals.format(examSession.followUpDate, 'dd/MM/yyyy')}"></strong></p>
+                                <p th:if="${examSession.followUpAppointment != null}">
+                                    Mã lịch hẹn: <strong th:text="${examSession.followUpAppointment.appointmentCode}"></strong>
+                                    <span class="badge badge-pending" th:text="${examSession.followUpAppointment.status.label}"></span>
+                                </p>
+                            </div>
+
                             <div class="complex-case-card" th:if="${examSession.status.name() == 'COMPLETED'}">
-                                <h4 style="margin:0 0 var(--space-2) 0;">Hệ số ca phức tạp</h4>
+                                <h4>Hệ số ca phức tạp</h4>
                                 <div class="complex-case-summary" th:if="${complexCaseCoefficient != null}">
                                     <p>Hệ số đề xuất: <strong th:text="${complexCaseCoefficient.coefficient}"></strong></p>
                                     <p>Lý do: <span th:text="${complexCaseCoefficient.reason}"></span></p>
@@ -177,8 +202,8 @@
         </div>
 
         <div id="tab-tooth-chart" class="tab-panel">
-            <div class="card" style="margin-bottom:var(--space-4);">
-                <div class="page-header" style="margin-bottom:var(--space-2);">
+            <div class="card filter-card mb-4">
+                <div class="page-header mb-2">
                     <h3 class="card-section-title">Sơ đồ răng FDI 32</h3>
                     <a th:href="@{/clinical/tooth-chart(patientId=${examSession.patient.id}, sessionId=${examSession.id})}" class="btn btn-secondary btn-sm">Mở trang chi tiết</a>
                 </div>
@@ -239,7 +264,7 @@
             </div>
 
             <div class="card" th:if="${selectedTooth != null}">
-                <div class="page-header" style="margin-bottom:var(--space-2);">
+                <div class="page-header mb-2">
                     <h3 class="card-section-title">Răng số <span th:text="${selectedTooth}"></span></h3>
                 </div>
 
@@ -279,7 +304,7 @@
                     Phiên khám đã hoàn tất nên không thể chỉnh sửa trạng thái răng.
                 </p>
 
-                <div style="margin-top:var(--space-4);" th:if="${history != null and not #lists.isEmpty(history)}">
+                <div class="mt-4" th:if="${history != null and not #lists.isEmpty(history)}">
                     <h4 class="card-section-title">Lịch sử thay đổi</h4>
                     <ul class="timeline">
                         <li th:each="h : ${history}">
@@ -313,7 +338,7 @@
                 <h3 class="card-section-title">Hóa đơn</h3>
                 <div th:if="${invoiceId != null}">
                     <a th:href="@{/clinical/invoices/{id}(id=${invoiceId})}" class="btn btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-ico"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         Xem hóa đơn
                     </a>
                 </div>
@@ -343,6 +368,20 @@
     if (/*[[${selectedTooth != null}]]*/ false) {
         activateClinicalTab('tab-tooth-chart');
     }
+
+    // Hien/an o chon ngay kham lai theo checkbox tai kham.
+    (function () {
+        var checkbox = document.getElementById('exam-followUp');
+        var group = document.getElementById('exam-followUpDateGroup');
+        var dateInput = document.getElementById('exam-followUpDate');
+        if (!checkbox || !group) return;
+        function sync() {
+            group.style.display = checkbox.checked ? '' : 'none';
+            if (dateInput) dateInput.required = checkbox.checked;
+        }
+        checkbox.addEventListener('change', sync);
+        sync();
+    })();
 </script>
 
 </th:block>

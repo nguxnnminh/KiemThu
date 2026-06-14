@@ -89,10 +89,8 @@
 
         if (selectedHidden) {
             shiftSelect.value = "";
-            var startInput = form.querySelector("[name='startTime']");
-            var endInput = form.querySelector("[name='endTime']");
-            if (startInput) startInput.value = "";
-            if (endInput) endInput.value = "";
+            var arrivalInput = form.querySelector("[data-arrival-time]");
+            if (arrivalInput) arrivalInput.value = "";
         }
     }
 
@@ -149,14 +147,19 @@
         if (shiftSelect) {
             shiftSelect.addEventListener("change", function () {
                 var selected = shiftSelect.options[shiftSelect.selectedIndex];
-                var startInput = form.querySelector("[name='startTime']");
-                var endInput = form.querySelector("[name='endTime']");
-                if (selected) {
-                    if (startInput && selected.getAttribute("data-start-time")) {
-                        startInput.value = selected.getAttribute("data-start-time");
+                var arrivalInput = form.querySelector("[data-arrival-time]");
+                // Mac dinh gio den = gio bat dau cua ca; rang buoc trong khung gio ca.
+                if (selected && arrivalInput) {
+                    var startTime = selected.getAttribute("data-start-time");
+                    var endTime = selected.getAttribute("data-end-time");
+                    if (startTime) {
+                        arrivalInput.min = startTime;
+                        if (!arrivalInput.value) {
+                            arrivalInput.value = startTime;
+                        }
                     }
-                    if (endInput && selected.getAttribute("data-end-time")) {
-                        endInput.value = selected.getAttribute("data-end-time");
+                    if (endTime) {
+                        arrivalInput.max = endTime;
                     }
                 }
                 updateAppointmentPreview(form);

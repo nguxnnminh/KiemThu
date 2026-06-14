@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Báo cáo doanh thu', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-clinical page-revenue-report">
     <div class="breadcrumb">Tiếp đón và khám bệnh / Báo cáo doanh thu</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/clinical/revenue}" class="toolbar">
             <div class="filters">
                 <input type="date" name="fromDate" class="form-control" th:value="${fromDate}" title="Từ ngày"/>
@@ -33,7 +33,7 @@
         </form>
     </div>
 
-    <div class="card-stats" style="margin-bottom:var(--space-4);">
+    <div class="card-stats mb-4">
         <div class="card-stat">
             <div class="card-stat-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -72,13 +72,13 @@
         </div>
     </div>
 
-    <div class="card chart-card" style="margin-bottom:var(--space-4);" th:if="${!#lists.isEmpty(byDay)}">
+    <div class="card chart-card mb-4" th:if="${!#lists.isEmpty(byDay)}">
         <h3 class="card-section-title">Doanh thu thuần theo ngày</h3>
         <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
     </div>
 
-    <div class="card table-responsive" style="margin-bottom:var(--space-4);">
-        <div class="page-header" style="margin-bottom:var(--space-2);">
+    <div class="card table-card table-responsive mb-4">
+        <div class="page-header mb-2">
             <h3 class="card-section-title">Theo phương thức thanh toán</h3>
         </div>
         <table class="data-table">
@@ -101,8 +101,8 @@
         </table>
     </div>
 
-    <div class="card table-responsive" style="margin-bottom:var(--space-4);">
-        <div class="page-header" style="margin-bottom:var(--space-2);">
+    <div class="card table-card table-responsive mb-4">
+        <div class="page-header mb-2">
             <h3 class="card-section-title">Theo ngày</h3>
         </div>
         <table class="data-table">
@@ -133,8 +133,8 @@
         </table>
     </div>
 
-    <div class="card table-responsive">
-        <div class="page-header" style="margin-bottom:var(--space-2);">
+    <div class="card table-card table-responsive">
+        <div class="page-header mb-2">
             <h3 class="card-section-title">Chi tiết giao dịch</h3>
         </div>
         <table class="data-table">

@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Phiếu lương của tôi', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-my-slips">
     <div class="breadcrumb">Tính lương bác sĩ / Phiếu lương của tôi</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>

@@ -61,6 +61,19 @@ public class RegisteredServiceController {
         return "redirect:/clinical/services?sessionId=" + form.getSessionId();
     }
 
+    @PostMapping("/clinical/services/{id}")
+    public String update(@PathVariable Long id, @ModelAttribute RegisteredServiceForm form,
+                         @RequestParam Long sessionId, RedirectAttributes ra) {
+        form.setSessionId(sessionId);
+        try {
+            registeredServiceManagementService.update(id, form);
+            ra.addFlashAttribute("successMessage", "Cap nhat dich vu thanh cong.");
+        } catch (BusinessException ex) {
+            ra.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/clinical/services?sessionId=" + sessionId;
+    }
+
     @PostMapping("/clinical/services/{id}/cancel")
     public String cancel(@PathVariable Long id, @RequestParam Long sessionId, RedirectAttributes ra) {
         try {

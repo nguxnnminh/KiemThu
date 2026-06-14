@@ -1316,7 +1316,8 @@ table.data-table tbody tr:last-child td { border-bottom: none; }
 .badge-in-progress,
 .badge-called,
 .badge-in-exam,
-.badge-open {
+.badge-open,
+.badge-info {
     background: var(--info-bg);
     color: var(--info);
     border: 1px solid var(--info-border);
@@ -2035,6 +2036,807 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     border-left-color: var(--error);
     background: var(--error-bg);
     color: var(--error);
+}
+
+/* =========================================================
+   UI/UX final polish - presentation only
+   Khong thay doi binding, URL, method hay nghiep vu.
+   ========================================================= */
+
+body {
+    background:
+        linear-gradient(180deg, #f8fcfd 0%, #eef6f7 42%, #e9f0f3 100%);
+}
+
+.topbar {
+    min-height: var(--topbar-height);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 10px 28px -24px rgba(15, 23, 42, 0.45);
+}
+
+.brand-logo,
+.topbar-user-ava,
+.sidebar-user-ava {
+    box-shadow: 0 8px 18px -12px rgba(13, 148, 136, 0.9);
+}
+
+.topbar-search input {
+    min-height: 38px;
+}
+
+.topbar-search input.is-searching {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: var(--ring);
+}
+
+.search-hidden {
+    display: none !important;
+}
+
+.sidebar {
+    background:
+        linear-gradient(180deg, #ffffff 0%, #fbfefe 60%, #f3faf9 100%);
+}
+
+.menu-group-title {
+    min-height: 42px;
+}
+
+.menu-list li a {
+    min-height: 38px;
+}
+
+.menu-list li a.active {
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.sidebar-logout,
+.btn,
+.btn-icon,
+.icon-btn,
+.tab-link,
+.grid-event,
+.patient-card,
+.dash-card {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.content {
+    scroll-behavior: smooth;
+}
+
+.page-header {
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid rgba(205, 216, 223, 0.65);
+}
+
+.page-header h2 {
+    font-size: clamp(20px, 2vw, 26px);
+}
+
+.page-actions,
+.toolbar .filters,
+.action-buttons {
+    row-gap: var(--space-2);
+}
+
+.card {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94));
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.toolbar {
+    align-items: stretch;
+}
+
+.toolbar .filters .form-control,
+.inline-filter .form-control {
+    min-height: 40px;
+}
+
+.toolbar .filters .btn {
+    min-height: 40px;
+}
+
+.table-responsive {
+    scrollbar-gutter: stable;
+}
+
+table.data-table {
+    min-width: 720px;
+}
+
+table.data-table td {
+    color: var(--text-soft);
+}
+
+table.data-table td:first-child {
+    color: var(--text);
+    font-weight: 650;
+}
+
+table.data-table tbody tr:focus-within {
+    background: var(--primary-soft);
+    outline: 2px solid rgba(13, 148, 136, 0.16);
+    outline-offset: -2px;
+}
+
+td.num,
+th.num,
+.invoice-final strong,
+.invoice-remaining strong,
+.summary-stat-value {
+    font-variant-numeric: tabular-nums;
+}
+
+.form-control {
+    min-height: 40px;
+}
+
+textarea.form-control {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.form-control:hover:not(:disabled) {
+    border-color: #9fb4be;
+}
+
+.form-group label {
+    line-height: 1.35;
+}
+
+.form-hint,
+.text-muted,
+.form-group small {
+    line-height: 1.45;
+}
+
+.btn {
+    min-height: 40px;
+    box-shadow: var(--shadow-xs);
+}
+
+.btn-sm {
+    min-height: 34px;
+}
+
+.btn-icon,
+.icon-btn {
+    min-width: 38px;
+    min-height: 38px;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+}
+
+.btn-danger:focus-visible,
+.btn-warning:focus-visible,
+.btn-success:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-ghost:focus-visible {
+    outline: none;
+}
+
+.btn.is-submitting,
+.btn-icon.is-submitting {
+    pointer-events: none;
+    opacity: 0.72;
+    position: relative;
+}
+
+.btn.is-submitting::after,
+.btn-icon.is-submitting::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+.alert-area {
+    position: sticky;
+    top: calc(var(--topbar-height) + 10px);
+    z-index: 45;
+}
+
+.alert {
+    box-shadow: var(--shadow-sm);
+}
+
+.alert.is-leaving {
+    transform: translateY(-4px);
+}
+
+.modal-box {
+    border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+.modal-body .modal-form {
+    display: grid;
+    gap: var(--space-1);
+}
+
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0), #ffffff 18%);
+    padding-top: var(--space-3);
+}
+
+.badge {
+    min-height: 24px;
+}
+
+.badge-draft,
+.badge-registered {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.badge-approved {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success-border);
+}
+
+.badge-rejected {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error-border);
+}
+
+.badge-invoiced,
+.badge-partial {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning-border);
+}
+
+.empty-state {
+    border-radius: var(--radius-lg);
+}
+
+.hero-banner {
+    min-height: 168px;
+}
+
+.dash-card {
+    min-height: 156px;
+}
+
+.card-stat {
+    min-height: 92px;
+}
+
+.tabs {
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.tab-link {
+    min-height: 42px;
+}
+
+.exam-status-strip,
+.summary-strip-grid,
+.invoice-summary {
+    box-shadow: var(--shadow-sm);
+}
+
+.patient-card,
+.complex-case-card,
+.kanban-col {
+    overflow: hidden;
+}
+
+.dental-chart {
+    container-type: inline-size;
+}
+
+.tooth {
+    min-width: 40px;
+    min-height: 40px;
+    touch-action: manipulation;
+}
+
+.grid-week-wrapper {
+    background: var(--card-bg);
+}
+
+.grid-event {
+    min-height: 42px;
+}
+
+.generated-password {
+    word-break: break-word;
+}
+
+@media (max-width: 1024px) {
+    .topbar-search input {
+        width: 180px;
+    }
+
+    .page-header {
+        align-items: stretch;
+    }
+
+    .page-actions {
+        width: 100%;
+    }
+
+    .page-actions .btn {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .brand-sub,
+    .page-title-current,
+    .role-badge {
+        display: none;
+    }
+
+    .content {
+        padding: var(--space-3);
+    }
+
+    .page-header {
+        gap: var(--space-3);
+    }
+
+    .page-header h2 {
+        font-size: 20px;
+    }
+
+    .toolbar,
+    .toolbar .filters,
+    .inline-filter,
+    .page-actions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .toolbar .filters > *,
+    .inline-filter > *,
+    .page-actions > *,
+    .modal-footer > * {
+        width: 100%;
+    }
+
+    .card {
+        padding: var(--space-4);
+    }
+
+    .table-responsive {
+        border-radius: var(--radius);
+    }
+
+    table.data-table th,
+    table.data-table td {
+        padding: 10px 12px;
+    }
+
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-box {
+        max-height: 92vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .hero-banner {
+        min-height: auto;
+    }
+
+    .dash-card {
+        min-height: 128px;
+    }
+
+    .patient-card-meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar-user-chip {
+        display: none;
+    }
+
+    .brand-name {
+        font-size: 14px;
+    }
+
+    .count-chip {
+        display: inline-flex;
+        margin-left: 0;
+        margin-top: 6px;
+    }
+
+    .card-grid,
+    .card-stats,
+    .kanban {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+        justify-content: flex-start;
+    }
+}
+
+/* ---------------- Template-level page polish ---------------- */
+.page-shell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    --module-accent: var(--primary);
+    --module-soft: var(--primary-soft);
+    --module-border: var(--primary-light);
+}
+
+.module-dashboard { --module-accent: #0d9488; --module-soft: #f0fdfa; --module-border: #99f6e4; }
+.module-system { --module-accent: #2563eb; --module-soft: #eff6ff; --module-border: #bfdbfe; }
+.module-schedule { --module-accent: #0f766e; --module-soft: #f0fdfa; --module-border: #ccfbf1; }
+.module-clinical { --module-accent: #0891b2; --module-soft: #ecfeff; --module-border: #a5f3fc; }
+.module-payroll { --module-accent: #b45309; --module-soft: #fffbeb; --module-border: #fde68a; }
+.module-patient { --module-accent: #15803d; --module-soft: #f0fdf4; --module-border: #bbf7d0; }
+
+.page-shell > .breadcrumb {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow-xs);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 7px 12px;
+}
+
+.page-shell > .page-header {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, var(--module-soft) 100%);
+    border: 1px solid var(--module-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-5);
+    overflow: hidden;
+}
+
+.page-shell > .page-header::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: var(--module-accent);
+}
+
+.page-shell > .page-header h2,
+.page-shell > .page-header h1 {
+    margin-bottom: 4px;
+}
+
+.page-shell > .page-header p,
+.page-shell > .page-header .muted {
+    color: var(--text-soft);
+}
+
+.page-shell > .page-header .btn {
+    box-shadow: var(--shadow-xs);
+}
+
+.filter-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+.content-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-card .toolbar,
+.filter-card .inline-filter {
+    margin: 0;
+}
+
+.table-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.table-card > h3,
+.table-card > .card-title,
+.table-card > .section-title,
+.table-card > .card-section-title,
+.table-card > .page-header {
+    margin: 0;
+    padding: var(--space-4) var(--space-5) 0;
+}
+
+.table-card > p,
+.table-card > .muted,
+.table-card > .toolbar,
+.table-card > .empty-state {
+    margin-left: var(--space-5);
+    margin-right: var(--space-5);
+}
+
+.table-card > .toolbar {
+    margin-top: var(--space-4);
+}
+
+.table-card table.data-table {
+    margin: 0;
+}
+
+.table-card table.data-table thead th {
+    background: #f8fafc;
+    color: var(--text-soft);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.table-card table.data-table tbody tr:hover {
+    background: var(--module-soft);
+}
+
+.table-card .action-buttons,
+.table-card .table-actions {
+    gap: 6px;
+}
+
+.form-card {
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-card > h3,
+.form-card > .form-section-title {
+    margin-top: 0;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-section {
+    display: grid;
+    gap: var(--space-4);
+    border-top: 1px solid var(--border);
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+}
+
+.form-section:first-child {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.detail-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.amount,
+.money,
+.currency {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    text-align: right;
+}
+
+.metric-card,
+.card-stat {
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, #ffffff, var(--module-soft));
+}
+
+.page-dashboard .hero-banner {
+    background: linear-gradient(135deg, #0f766e 0%, #0891b2 55%, #2563eb 100%);
+    color: #ffffff;
+    border: 0;
+}
+
+.dashboard-grid {
+    align-items: stretch;
+}
+
+.dashboard-grid .dash-card {
+    isolation: isolate;
+}
+
+.patient-booking-card {
+    width: min(100%, 760px);
+}
+
+.patient-booking-card .modal-footer {
+    justify-content: flex-end;
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-4);
+}
+
+.detail-aside .form-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.invoice-summary .kv-list dd,
+.invoice-final strong,
+.invoice-remaining strong,
+.summary-stat-value,
+.card-stat-value {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+.module-payroll .summary-strip {
+    border-color: var(--module-border);
+}
+
+.page-dashboard .hero-banner h1,
+.page-dashboard .hero-banner p {
+    color: #ffffff;
+}
+
+.page-dashboard .dash-card,
+.page-dashboard .card-stat {
+    position: relative;
+}
+
+.page-dashboard .dash-card::after,
+.page-dashboard .card-stat::after {
+    content: "";
+    position: absolute;
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: 0;
+    height: 3px;
+    border-radius: 999px 999px 0 0;
+    background: var(--module-accent);
+    opacity: 0.42;
+}
+
+.module-clinical .exam-main,
+.module-clinical .exam-panel,
+.module-clinical .invoice-summary,
+.module-payroll .payroll-summary,
+.module-patient .patient-card {
+    border-color: var(--module-border);
+}
+
+.page-book-appointment .patient-booking-card,
+.page-patient-medical-record .card,
+.page-patient-invoices .card {
+    max-width: 920px;
+}
+
+.timeline {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+}
+
+.timeline-item {
+    border-left: 3px solid var(--module-border);
+    padding-left: var(--space-4);
+}
+
+.app-alert {
+    box-shadow: var(--shadow-sm);
+}
+
+.app-modal-overlay .modal-box {
+    box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 760px) {
+    .page-shell {
+        gap: var(--space-3);
+    }
+
+    .page-shell > .page-header {
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+    }
+
+    .filter-card,
+    .form-card {
+        padding: var(--space-4);
+    }
+
+    .table-card > h3,
+    .table-card > .card-title,
+    .table-card > .section-title,
+    .table-card > .card-section-title,
+    .table-card > .page-header {
+        padding: var(--space-4) var(--space-4) 0;
+    }
+
+    .table-card > p,
+    .table-card > .muted,
+    .table-card > .toolbar,
+    .table-card > .empty-state {
+        margin-left: var(--space-4);
+        margin-right: var(--space-4);
+    }
+}
+
+/* =========================================================
+   Utility classes — presentation only (vong polish cuoi)
+   Thay cho cac inline-style lap lai. Khong anh huong binding.
+   ========================================================= */
+
+/* Dau bat buoc (*) va text trang thai loi */
+.req { color: var(--error); font-weight: 700; }
+.text-error { color: var(--error); }
+
+/* Spacing margin-bottom */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: var(--space-1) !important; }
+.mb-2 { margin-bottom: var(--space-2) !important; }
+.mb-3 { margin-bottom: var(--space-3) !important; }
+.mb-4 { margin-bottom: var(--space-4) !important; }
+.mb-5 { margin-bottom: var(--space-5) !important; }
+.mb-6 { margin-bottom: var(--space-6) !important; }
+
+/* Spacing margin-top */
+.mt-0 { margin-top: 0 !important; }
+.mt-1 { margin-top: var(--space-1) !important; }
+.mt-2 { margin-top: var(--space-2) !important; }
+.mt-3 { margin-top: var(--space-3) !important; }
+.mt-4 { margin-top: var(--space-4) !important; }
+
+/* Helper trinh bay le */
+.text-right { text-align: right; }
+.fw-700 { font-weight: 700; }
+.inline-block { display: inline; }
+
+/* Tieu de phu trong the de xuat (gom inline-style cu cua h4) */
+.complex-case-card > h4 { margin: 0 0 var(--space-2); }
+
+/* Filter select rong toi thieu cho de quet */
+.col-min-220 { min-width: 220px; }
+
+/* Icon dat truoc text trong nut (thay vertical-align inline) */
+.btn-ico { vertical-align: -3px; margin-right: 4px; }
+
+/* Hang badge trang thai can giua duoi tong ket hoa don */
+.invoice-status-row { margin-top: var(--space-3); text-align: center; }
+
+/* Nut gon trong bang (thay padding inline 4px 12px) */
+.btn-compact { padding: 4px 12px; }
+
+/* Duong phan cach giua cac khoi trong modal/the */
+.section-divider {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
 }
 
 /* ---------------- Reduced motion ---------------- */

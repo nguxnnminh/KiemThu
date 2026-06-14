@@ -2,8 +2,8 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <th:block th:replace="~{layout/main :: layout('Bảng điều khiển', ~{::#content}, ~{})}">
-    <div id="content">
-        <section class="hero-banner">
+    <div id="content" class="page-shell module-dashboard page-dashboard">
+        <section class="hero-banner dashboard-hero">
             <div class="hero-banner-text">
                 <span class="hero-eyebrow" id="heroDate">Hôm nay</span>
                 <h2 class="hero-title">Xin chào, <span sec:authentication="name">user</span></h2>
@@ -23,7 +23,7 @@
             <p class="page-sub">Các chức năng thường dùng theo vai trò của bạn</p>
         </div>
 
-        <div class="card-grid" th:switch="${role}">
+        <div class="card-grid dashboard-grid" th:switch="${role}">
 
             <!-- ADMIN -->
             <th:block th:case="'ADMIN'">
@@ -190,8 +190,8 @@
                 </a>
                 <a class="dash-card" th:href="@{/patient/treatment-history}">
                     <div class="dash-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-                    <h3>Lịch sử điều trị</h3>
-                    <p>Xem lại lịch sử điều trị</p>
+                    <h3>Hồ sơ bệnh án</h3>
+                    <p>Xem chi tiết các lần khám của bạn</p>
                 </a>
                 <a class="dash-card" th:href="@{/account/profile}">
                     <div class="dash-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v1.66"/></svg></div>

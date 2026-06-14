@@ -5,7 +5,7 @@ package com.smartdental.enums;
  */
 public enum InvoiceStatus {
     UNPAID("Chưa thanh toán"),
-    PARTIAL("Chưa thanh toán"),
+    PARTIAL("Thanh toán một phần"),
     PAID("Đã thanh toán"),
     CANCELLED("Đã hủy");
 

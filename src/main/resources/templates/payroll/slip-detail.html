@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Chi tiết phiếu lương', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-slip-detail">
     <div class="breadcrumb">Tính lương bác sĩ / Phiếu lương tháng / Chi tiết</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -18,7 +18,7 @@
         <a sec:authorize="hasRole('DOCTOR')" th:href="@{/payroll/my-slips}" class="btn btn-secondary">← Quay lại danh sách</a>
     </div>
 
-    <div class="card summary-strip" style="margin-bottom:var(--space-4);">
+    <div class="card summary-strip mb-4">
         <div class="summary-strip-grid">
             <div class="summary-stat">
                 <span class="summary-stat-label">Trạng thái</span>
@@ -60,7 +60,7 @@
         </th:block>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>

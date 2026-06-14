@@ -11,8 +11,10 @@ import com.smartdental.entity.WorkShift;
 import com.smartdental.enums.AppointmentSource;
 import com.smartdental.enums.AppointmentStatus;
 import com.smartdental.enums.CodePrefix;
+import com.smartdental.enums.CommonStatus;
 import com.smartdental.enums.EmployeePosition;
 import com.smartdental.enums.EmployeeStatus;
+import com.smartdental.enums.WorkShiftDayType;
 import com.smartdental.exception.BusinessException;
 import com.smartdental.repository.AppointmentRepository;
 import com.smartdental.repository.DentalServiceRepository;
@@ -114,7 +116,8 @@ public class AppointmentService {
         if (workShift.getDayType() != null && !workShift.getDayType().appliesTo(form.getAppointmentDate())) {
             throw new BusinessException("Ca kham nay khong ap dung cho ngay kham da chon.");
         }
-        validateTimeWithinShift(form, workShift);
+        LocalTime startTime = resolveArrivalTime(form, workShift);
+        LocalTime endTime = workShift.getEndTime();
 
         DoctorShiftRegistration registration = null;
         if (doctor != null) {
@@ -124,11 +127,11 @@ public class AppointmentService {
                             "Bac si chua co lich truc duoc duyet cho ngay va ca kham da chon."));
 
             if (appointmentRepository.existsDoctorConflict(
-                    doctor.getId(), form.getAppointmentDate(), form.getStartTime(), form.getEndTime(), null)) {
+                    doctor.getId(), form.getAppointmentDate(), startTime, endTime, null)) {
                 throw new BusinessException("Bac si da co lich kham trung khung gio nay.");
             }
             if (appointmentRepository.existsChairConflict(
-                    registration.getChair().getId(), form.getAppointmentDate(), form.getStartTime(), form.getEndTime(), null)) {
+                    registration.getChair().getId(), form.getAppointmentDate(), startTime, endTime, null)) {
                 throw new BusinessException("Ghe nha khoa da duoc su dung trong khung gio nay.");
             }
 
@@ -163,8 +166,8 @@ public class AppointmentService {
         appointment.setRoom(registration != null ? registration.getRoom() : null);
         appointment.setChair(registration != null ? registration.getChair() : null);
         appointment.setAppointmentDate(form.getAppointmentDate());
-        appointment.setStartTime(form.getStartTime());
-        appointment.setEndTime(form.getEndTime());
+        appointment.setStartTime(startTime);
+        appointment.setEndTime(endTime);
         appointment.setNote(form.getNote());
         appointment.setSource(source);
         appointment.setStatus(AppointmentStatus.PENDING);
@@ -173,6 +176,65 @@ public class AppointmentService {
         appointmentStatusLogService.log(appointment, null, AppointmentStatus.PENDING, "Tao lich kham");
         auditLogService.log("CREATE_APPOINTMENT", "Appointment", appointment.getAppointmentCode(),
                 "Tao lich kham cho benh nhan " + patient.getFullName() + " ngay " + form.getAppointmentDate());
+        return appointment;
+    }
+
+    /**
+     * Tao lich hen tai kham (follow-up) tu phien kham vua hoan tat.
+     * Khac voi {@link #create}: khong bat buoc bac si da co lich truc duoc duyet vao ngay tai kham
+     * (vi ngay tai kham thuong cach 1 thang, lich truc chua dang ky). Lich tao o trang thai PENDING,
+     * gio den mac dinh la dau ca; phong/ghe se duoc gan khi le tan xac nhan.
+     */
+    @Transactional
+    public Appointment createFollowUp(Patient patient, Employee doctor, DentalService service, LocalDate followUpDate) {
+        if (patient == null) {
+            throw new BusinessException("Khong xac dinh duoc benh nhan de tao lich tai kham.");
+        }
+        if (followUpDate == null) {
+            throw new BusinessException("Vui long chon ngay tai kham.");
+        }
+        if (followUpDate.isBefore(LocalDate.now())) {
+            throw new BusinessException("Ngay tai kham khong the o trong qua khu.");
+        }
+        if (holidayRepository.existsActiveHolidayOnDate(followUpDate)) {
+            throw new BusinessException("Ngay tai kham la ngay nghi cua phong kham, vui long chon ngay khac.");
+        }
+
+        WorkShiftDayType dayType = followUpDate.getDayOfWeek() == DayOfWeek.SATURDAY
+                || followUpDate.getDayOfWeek() == DayOfWeek.SUNDAY
+                ? WorkShiftDayType.WEEKEND : WorkShiftDayType.WEEKDAY;
+        List<WorkShift> shifts = workShiftRepository.findActiveForDayType(CommonStatus.ACTIVE, dayType);
+        if (shifts.isEmpty()) {
+            throw new BusinessException("Khong co ca lam viec phu hop cho ngay tai kham da chon.");
+        }
+        WorkShift workShift = shifts.get(0);
+
+        // Neu bac si tinh co da co lich truc duyet vao ngay/ca nay thi gan luon phong/ghe.
+        DoctorShiftRegistration registration = doctor == null ? null
+                : doctorShiftRegistrationRepository
+                        .findConfirmedByDoctorDateAndShift(doctor.getId(), followUpDate, workShift.getId())
+                        .orElse(null);
+
+        Appointment appointment = new Appointment();
+        appointment.setAppointmentCode(codeGeneratorService.nextCode(CodePrefix.APPOINTMENT));
+        appointment.setPatient(patient);
+        appointment.setDoctor(doctor);
+        appointment.setService(service);
+        appointment.setWorkShift(workShift);
+        appointment.setDoctorShiftRegistration(registration);
+        appointment.setRoom(registration != null ? registration.getRoom() : null);
+        appointment.setChair(registration != null ? registration.getChair() : null);
+        appointment.setAppointmentDate(followUpDate);
+        appointment.setStartTime(workShift.getStartTime());
+        appointment.setEndTime(workShift.getEndTime());
+        appointment.setNote("Lich hen tai kham (tu dong tao tu phien kham truoc).");
+        appointment.setSource(AppointmentSource.RECEPTIONIST);
+        appointment.setStatus(AppointmentStatus.PENDING);
+
+        appointmentRepository.save(appointment);
+        appointmentStatusLogService.log(appointment, null, AppointmentStatus.PENDING, "Tao lich hen tai kham");
+        auditLogService.log("CREATE_FOLLOW_UP_APPOINTMENT", "Appointment", appointment.getAppointmentCode(),
+                "Tao lich hen tai kham cho benh nhan " + patient.getFullName() + " ngay " + followUpDate);
         return appointment;
     }
 
@@ -190,7 +252,8 @@ public class AppointmentService {
         if (workShift.getDayType() != null && !workShift.getDayType().appliesTo(form.getAppointmentDate())) {
             throw new BusinessException("Ca kham nay khong ap dung cho ngay kham da chon.");
         }
-        validateTimeWithinShift(form, workShift);
+        LocalTime startTime = resolveArrivalTime(form, workShift);
+        LocalTime endTime = workShift.getEndTime();
 
         boolean rescheduling = !java.util.Objects.equals(doctor != null ? doctor.getId() : null,
                         appointment.getDoctor() != null ? appointment.getDoctor().getId() : null)
@@ -215,11 +278,11 @@ public class AppointmentService {
                                 "Bac si chua co lich truc duoc duyet cho ngay va ca kham da chon."));
 
                 if (appointmentRepository.existsDoctorConflict(
-                        doctor.getId(), form.getAppointmentDate(), form.getStartTime(), form.getEndTime(), appointment.getId())) {
+                        doctor.getId(), form.getAppointmentDate(), startTime, endTime, appointment.getId())) {
                     throw new BusinessException("Bac si da co lich kham trung khung gio nay.");
                 }
                 if (appointmentRepository.existsChairConflict(
-                        registration.getChair().getId(), form.getAppointmentDate(), form.getStartTime(), form.getEndTime(), appointment.getId())) {
+                        registration.getChair().getId(), form.getAppointmentDate(), startTime, endTime, appointment.getId())) {
                     throw new BusinessException("Ghe nha khoa da duoc su dung trong khung gio nay.");
                 }
                 long activeCount = appointmentRepository.countActiveByDoctorShiftRegistration(registration.getId());
@@ -233,7 +296,7 @@ public class AppointmentService {
             }
         } else if (doctor != null) {
             if (appointmentRepository.existsDoctorConflict(
-                    doctor.getId(), form.getAppointmentDate(), form.getStartTime(), form.getEndTime(), appointment.getId())) {
+                    doctor.getId(), form.getAppointmentDate(), startTime, endTime, appointment.getId())) {
                 throw new BusinessException("Bac si da co lich kham trung khung gio nay.");
             }
         }
@@ -245,8 +308,8 @@ public class AppointmentService {
         appointment.setRoom(registration != null ? registration.getRoom() : null);
         appointment.setChair(registration != null ? registration.getChair() : null);
         appointment.setAppointmentDate(form.getAppointmentDate());
-        appointment.setStartTime(form.getStartTime());
-        appointment.setEndTime(form.getEndTime());
+        appointment.setStartTime(startTime);
+        appointment.setEndTime(endTime);
         appointment.setNote(form.getNote());
 
         appointmentRepository.save(appointment);
@@ -364,31 +427,23 @@ public class AppointmentService {
         if (form.getAppointmentDate().isBefore(LocalDate.now())) {
             throw new BusinessException("Khong the dat lich cho ngay trong qua khu.");
         }
-        if (form.getStartTime() == null || form.getEndTime() == null) {
-            throw new BusinessException("Vui long chon gio bat dau va gio ket thuc.");
-        }
-        if (!form.getEndTime().isAfter(form.getStartTime())) {
-            throw new BusinessException("Gio ket thuc phai sau gio bat dau.");
-        }
-        LocalTime openTime = LocalTime.of(8, 0);
-        LocalTime closeTime = LocalTime.of(21, 0);
-        if (form.getStartTime().isBefore(openTime) || form.getEndTime().isAfter(closeTime)) {
-            throw new BusinessException("Gio kham phai trong khung gio lam viec (08:00 - 21:00).");
-        }
     }
 
-    /** Gio kham phai nam trong khung gio cua ca lam viec da chon (dong bo "moi thu theo ca"). */
-    private void validateTimeWithinShift(AppointmentForm form, WorkShift workShift) {
-        if (workShift == null || workShift.getStartTime() == null || workShift.getEndTime() == null) {
-            return;
+    /**
+     * Benh nhan chi chon CA + GIO DEN. Gio den phai nam trong khung gio cua ca da chon.
+     * Tra ve gio den (= gio bat dau cua lich kham); gio ket thuc lay theo gio ket thuc cua ca.
+     */
+    private LocalTime resolveArrivalTime(AppointmentForm form, WorkShift workShift) {
+        LocalTime arrival = form.getArrivalTime();
+        if (arrival == null) {
+            throw new BusinessException("Vui long chon gio den kham.");
         }
-        if (form.getStartTime() == null || form.getEndTime() == null) {
-            return;
+        if (workShift != null && workShift.getStartTime() != null && workShift.getEndTime() != null) {
+            if (arrival.isBefore(workShift.getStartTime()) || !arrival.isBefore(workShift.getEndTime())) {
+                throw new BusinessException("Gio den phai nam trong khung gio cua ca lam viec ("
+                        + workShift.getStartTime() + " - " + workShift.getEndTime() + ").");
+            }
         }
-        if (form.getStartTime().isBefore(workShift.getStartTime())
-                || form.getEndTime().isAfter(workShift.getEndTime())) {
-            throw new BusinessException("Gio kham phai nam trong khung gio cua ca lam viec ("
-                    + workShift.getStartTime() + " - " + workShift.getEndTime() + ").");
-        }
+        return arrival;
     }
 }

@@ -5,8 +5,8 @@
     <title>Đã xảy ra lỗi - Smart Dental</title>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
-<body class="error-body">
-    <div class="error-box">
+<body class="error-body page-error page-error-500">
+    <div class="error-box content-card">
         <h1>Lỗi</h1>
         <p th:text="${errorMessage} ?: 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.'">Đã xảy ra lỗi.</p>
         <a href="/dashboard" class="btn btn-primary">Về trang chủ</a>

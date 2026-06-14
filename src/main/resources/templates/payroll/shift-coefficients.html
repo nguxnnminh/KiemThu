@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Hệ số ca làm việc', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-shift-coefficients">
     <div class="breadcrumb">Tính lương bác sĩ / Hệ số ca làm việc</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -18,7 +18,7 @@
         </button>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -74,12 +74,12 @@
 
     <!-- ===================== Modal: Them he so ca ===================== -->
     <template id="addShiftCoefficientModal" data-modal-title="Thêm hệ số ca">
-        <form method="post" class="modal-form" th:action="@{/payroll/shift-coefficients}" th:object="${coefficientForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/payroll/shift-coefficients}" th:object="${coefficientForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Ca làm việc <span style="color:var(--error)">*</span></label>
+                <label>Ca làm việc <span class="req">*</span></label>
                 <select name="workShiftId" class="form-control" required>
                     <option value="">-- Chọn ca làm việc --</option>
                     <option th:each="ws : ${workShifts}" th:value="${ws.id}" th:text="${ws.name + ' - ' + ws.dayType.label}"
@@ -87,11 +87,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Hệ số (1.0 - 1.5) <span style="color:var(--error)">*</span></label>
+                <label>Hệ số (1.0 - 1.5) <span class="req">*</span></label>
                 <input type="number" step="0.01" min="1.0" max="1.5" name="coefficient" class="form-control" th:value="*{coefficient}" required/>
             </div>
             <div class="form-group">
-                <label>Hiệu lực từ <span style="color:var(--error)">*</span></label>
+                <label>Hiệu lực từ <span class="req">*</span></label>
                 <input type="date" name="effectiveFrom" class="form-control" th:value="*{effectiveFrom}" required/>
             </div>
             <div class="form-group">

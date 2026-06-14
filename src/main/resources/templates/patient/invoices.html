@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Hóa đơn của tôi', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-patient page-patient-invoices">
     <div class="breadcrumb">Dịch vụ của tôi / Hóa đơn của tôi</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -13,7 +13,7 @@
         <p class="page-sub">Danh sách hóa đơn thanh toán dịch vụ khám chữa bệnh.</p>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>

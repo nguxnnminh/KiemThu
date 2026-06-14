@@ -17,12 +17,14 @@
     var modalTitle = document.getElementById("appModalTitle");
     var modalBody = document.getElementById("appModalBody");
     var closeBtn = document.getElementById("appModalClose");
+    var lastActiveElement = null;
 
     if (!overlay) {
         return;
     }
 
     function openModal(title, contentNode) {
+        lastActiveElement = document.activeElement;
         modalTitle.textContent = title || "";
         modalBody.innerHTML = "";
         if (contentNode) {
@@ -30,12 +32,19 @@
         }
         overlay.classList.add("show");
         document.body.style.overflow = "hidden";
+        window.setTimeout(function () {
+            var focusable = modalBody.querySelector("input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href]");
+            (focusable || closeBtn).focus();
+        }, 0);
     }
 
     function closeModal() {
         overlay.classList.remove("show");
         modalBody.innerHTML = "";
         document.body.style.overflow = "";
+        if (lastActiveElement && typeof lastActiveElement.focus === "function") {
+            lastActiveElement.focus();
+        }
     }
 
     window.AppModal = {
@@ -85,8 +94,8 @@
             if (!targetForm) {
                 return;
             }
-            var title = confirmTrigger.getAttribute("data-confirm-title") || "Xac nhan";
-            var message = confirmTrigger.getAttribute("data-confirm-message") || "Ban co chac chan muon thuc hien thao tac nay?";
+            var title = confirmTrigger.getAttribute("data-confirm-title") || "Xác nhận";
+            var message = confirmTrigger.getAttribute("data-confirm-message") || "Bạn có chắc chắn muốn thực hiện thao tác này?";
             var needReason = confirmTrigger.getAttribute("data-confirm-reason") === "true";
 
             var wrapper = document.createElement("div");
@@ -98,7 +107,7 @@
                 var group = document.createElement("div");
                 group.className = "form-group";
                 var label = document.createElement("label");
-                label.textContent = "Ly do";
+                label.textContent = "Lý do";
                 var textarea = document.createElement("textarea");
                 textarea.className = "form-control";
                 textarea.name = "reason";
@@ -114,13 +123,13 @@
             var cancelBtn = document.createElement("button");
             cancelBtn.type = "button";
             cancelBtn.className = "btn btn-secondary";
-            cancelBtn.textContent = "Huy";
+            cancelBtn.textContent = "Hủy";
             cancelBtn.addEventListener("click", closeModal);
 
             var confirmBtn = document.createElement("button");
             confirmBtn.type = "button";
             confirmBtn.className = "btn btn-primary";
-            confirmBtn.textContent = "Xac nhan";
+            confirmBtn.textContent = "Xác nhận";
             confirmBtn.addEventListener("click", function () {
                 if (needReason) {
                     var reasonField = wrapper.querySelector("textarea[name='reason']");

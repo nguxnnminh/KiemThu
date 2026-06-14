@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Quản lý phòng & ghế', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-schedule page-rooms">
     <div class="breadcrumb">Quản lý lịch khám / Phòng &amp; ghế</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -24,7 +24,7 @@
     </div>
 
     <!-- ===================== Danh sach phong ===================== -->
-    <div class="card table-responsive" style="margin-bottom:var(--space-4);">
+    <div class="card table-card table-responsive mb-4">
         <h3 class="card-section-title">Danh sách phòng khám</h3>
         <table class="data-table">
             <thead>
@@ -92,7 +92,7 @@
     </div>
 
     <!-- ===================== Danh sach ghe ===================== -->
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <h3 class="card-section-title">Danh sách ghế nha khoa</h3>
         <table class="data-table">
             <thead>
@@ -163,12 +163,12 @@
 
     <!-- ===================== Modal: Them phong ===================== -->
     <template id="addRoomModal" data-modal-title="Thêm phòng khám">
-        <form method="post" class="modal-form" th:action="@{/schedule/rooms}" th:object="${roomForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/schedule/rooms}" th:object="${roomForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Tên phòng <span style="color:var(--error)">*</span></label>
+                <label>Tên phòng <span class="req">*</span></label>
                 <input type="text" name="name" class="form-control" th:value="*{name}" required/>
             </div>
             <div class="form-group">
@@ -194,7 +194,7 @@
     <template th:each="r : ${rooms.content}" th:id="'editRoomModal-' + ${r.id}"
               th:data-modal-title="'Sửa phòng: ' + ${r.name}"
               th:with="ef=${editForms.get('editRoomForm-' + r.id)}">
-        <form method="post" class="modal-form" th:action="@{/schedule/rooms/{id}(id=${r.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/schedule/rooms/{id}(id=${r.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
@@ -203,7 +203,7 @@
                 <input type="text" class="form-control" th:value="${r.roomCode}" disabled/>
             </div>
             <div class="form-group">
-                <label>Tên phòng <span style="color:var(--error)">*</span></label>
+                <label>Tên phòng <span class="req">*</span></label>
                 <input type="text" name="name" class="form-control"
                        th:value="${ef != null ? ef.name : r.name}" required/>
             </div>
@@ -229,12 +229,12 @@
 
     <!-- ===================== Modal: Them ghe ===================== -->
     <template id="addChairModal" data-modal-title="Thêm ghế nha khoa">
-        <form method="post" class="modal-form" th:action="@{/schedule/chairs}" th:object="${chairForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/schedule/chairs}" th:object="${chairForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Phòng <span style="color:var(--error)">*</span></label>
+                <label>Phòng <span class="req">*</span></label>
                 <select name="roomId" class="form-control" required>
                     <option value="">-- Chọn phòng --</option>
                     <option th:each="r : ${activeRooms}" th:value="${r.id}" th:text="${r.name}"
@@ -242,7 +242,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Tên ghế <span style="color:var(--error)">*</span></label>
+                <label>Tên ghế <span class="req">*</span></label>
                 <input type="text" name="name" class="form-control" th:value="*{name}" required/>
             </div>
             <div class="form-group">
@@ -268,7 +268,7 @@
     <template th:each="c : ${chairs.content}" th:id="'editChairModal-' + ${c.id}"
               th:data-modal-title="'Sửa ghế: ' + ${c.name}"
               th:with="ef=${editForms.get('editChairForm-' + c.id)}">
-        <form method="post" class="modal-form" th:action="@{/schedule/chairs/{id}(id=${c.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/schedule/chairs/{id}(id=${c.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
@@ -277,14 +277,14 @@
                 <input type="text" class="form-control" th:value="${c.chairCode}" disabled/>
             </div>
             <div class="form-group">
-                <label>Phòng <span style="color:var(--error)">*</span></label>
+                <label>Phòng <span class="req">*</span></label>
                 <select name="roomId" class="form-control" required>
                     <option th:each="r : ${activeRooms}" th:value="${r.id}" th:text="${r.name}"
                             th:selected="${(ef != null ? ef.roomId : c.room.id) == r.id}"></option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Tên ghế <span style="color:var(--error)">*</span></label>
+                <label>Tên ghế <span class="req">*</span></label>
                 <input type="text" name="name" class="form-control"
                        th:value="${ef != null ? ef.name : c.name}" required/>
             </div>

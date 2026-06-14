@@ -88,6 +88,7 @@ public class ExaminationController {
                         .findByTreatmentSessionId(session.getId()).orElse(null);
                 model.addAttribute("complexCaseCoefficient", coefficient);
             }
+            model.addAttribute("followUpDefaultDate", LocalDate.now().plusMonths(1));
         }
 
         if (!model.containsAttribute("examinationForm")) {

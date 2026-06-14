@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Quản lý người dùng', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-system page-users">
     <div class="breadcrumb">Quản lý hệ thống / Quản lý người dùng và phân quyền</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -18,11 +18,11 @@
         </button>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/system/users}" class="toolbar">
             <div class="filters">
-                <input type="text" name="keyword" class="form-control" placeholder="Tìm theo tên đăng nhập, email..."
-                       th:value="${keyword}" style="min-width:220px;"/>
+                <input type="text" name="keyword" class="form-control col-min-220" placeholder="Tìm theo tên đăng nhập, email..."
+                       th:value="${keyword}"/>
                 <select name="role" class="form-control">
                     <option value="">-- Tất cả vai trò --</option>
                     <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
@@ -41,7 +41,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -111,22 +111,22 @@
 
     <!-- ===================== Modal: Them tai khoan ===================== -->
     <template id="addUserModal" data-modal-title="Thêm tài khoản">
-        <form method="post" class="modal-form" th:action="@{/system/users}" th:object="${userForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/users}" th:object="${userForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Tên đăng nhập <span style="color:var(--error)">*</span></label>
+                <label>Tên đăng nhập <span class="req">*</span></label>
                 <input type="text" name="username" class="form-control" th:value="*{username}"
                        placeholder="VD: bs_minh01" required/>
                 <small class="text-muted">Tối thiểu 6 ký tự, gồm chữ thường, số và dấu gạch dưới.</small>
             </div>
             <div class="form-group">
-                <label>Email <span style="color:var(--error)">*</span></label>
+                <label>Email <span class="req">*</span></label>
                 <input type="email" name="email" class="form-control" th:value="*{email}" required/>
             </div>
             <div class="form-group">
-                <label>Vai trò <span style="color:var(--error)">*</span></label>
+                <label>Vai trò <span class="req">*</span></label>
                 <select name="role" class="form-control" required>
                     <option value="">-- Chọn vai trò --</option>
                     <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
@@ -153,11 +153,11 @@
                 <small class="text-muted">Tài khoản chỉ được liên kết với một nhân viên hoặc một bệnh nhân.</small>
             </div>
             <div class="form-group">
-                <label>Mật khẩu <span style="color:var(--error)">*</span></label>
+                <label>Mật khẩu <span class="req">*</span></label>
                 <input type="password" name="password" class="form-control" required/>
             </div>
             <div class="form-group">
-                <label>Nhập lại mật khẩu <span style="color:var(--error)">*</span></label>
+                <label>Nhập lại mật khẩu <span class="req">*</span></label>
                 <input type="password" name="confirmPassword" class="form-control" required/>
             </div>
             <button type="button" class="btn btn-secondary btn-sm" onclick="smartDentalGeneratePassword(this)">Sinh mật khẩu ngẫu nhiên</button>
@@ -182,7 +182,7 @@
     <template th:each="user : ${users.content}" th:id="'editUserModal-' + ${user.id}"
               th:data-modal-title="'Sửa tài khoản: ' + ${user.username}"
               th:with="ef=${editForms.get('editUserForm-' + user.id)}">
-        <form method="post" class="modal-form" th:action="@{/system/users/{id}(id=${user.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/users/{id}(id=${user.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
@@ -191,12 +191,12 @@
                 <input type="text" class="form-control" th:value="${user.username}" disabled/>
             </div>
             <div class="form-group">
-                <label>Email <span style="color:var(--error)">*</span></label>
+                <label>Email <span class="req">*</span></label>
                 <input type="email" name="email" class="form-control"
                        th:value="${ef != null ? ef.email : user.email}" required/>
             </div>
             <div class="form-group">
-                <label>Vai trò <span style="color:var(--error)">*</span></label>
+                <label>Vai trò <span class="req">*</span></label>
                 <select name="role" class="form-control" required>
                     <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
                             th:selected="${(ef != null ? ef.role : user.role) == r}"></option>
@@ -245,7 +245,7 @@
             <form method="post" th:action="@{/system/users/{id}/lock(id=${user.id})}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="form-group">
-                    <label>Lý do khóa <span style="color:var(--error)">*</span></label>
+                    <label>Lý do khóa <span class="req">*</span></label>
                     <textarea name="reason" class="form-control" required></textarea>
                 </div>
                 <div class="modal-footer">
@@ -271,16 +271,16 @@
     <!-- ===================== Modal: Dat lai mat khau ===================== -->
     <template th:each="user : ${users.content}" th:id="'resetPasswordModal-' + ${user.id}"
               th:data-modal-title="'Đặt lại mật khẩu: ' + ${user.username}">
-        <form method="post" class="modal-form" th:action="@{/system/users/{id}/reset-password(id=${user.id})}">
+        <form method="post" class="modal-form form-section" th:action="@{/system/users/{id}/reset-password(id=${user.id})}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Mật khẩu mới <span style="color:var(--error)">*</span></label>
+                <label>Mật khẩu mới <span class="req">*</span></label>
                 <input type="password" name="newPassword" class="form-control" required/>
             </div>
             <div class="form-group">
-                <label>Nhập lại mật khẩu mới <span style="color:var(--error)">*</span></label>
+                <label>Nhập lại mật khẩu mới <span class="req">*</span></label>
                 <input type="password" name="confirmPassword" class="form-control" required/>
             </div>
             <button type="button" class="btn btn-secondary btn-sm" onclick="smartDentalGeneratePassword(this)">Sinh mật khẩu ngẫu nhiên</button>

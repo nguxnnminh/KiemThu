@@ -29,7 +29,7 @@ public class AppointmentForm {
     private Long serviceId;
     private Long workShiftId;
     private LocalDate appointmentDate;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    // Gio benh nhan den kham (trong khung gio cua ca). He thong tu suy ra start/end de luu va xep len luoi.
+    private LocalTime arrivalTime;
     private String note;
 }

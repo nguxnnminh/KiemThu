@@ -3,7 +3,7 @@
 <body>
 <th:block th:replace="~{layout/main :: layout('Phiếu lương bác sĩ', ~{::#content}, ~{::script})}">
 
-<div id="content">
+<div id="content" class="page-shell module-payroll page-slips">
     <div class="breadcrumb">Tính lương bác sĩ / Phiếu lương tháng</div>
 
     <div th:replace="~{layout/fragments :: alerts}"></div>
@@ -18,7 +18,7 @@
         </button>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card filter-card mb-4">
         <form method="get" th:action="@{/payroll/slips}" class="toolbar">
             <div class="filters">
                 <select name="doctorId" class="form-control">
@@ -38,7 +38,7 @@
         </form>
     </div>
 
-    <div class="card table-responsive">
+    <div class="card table-card table-responsive">
         <table class="data-table">
             <thead>
             <tr>
@@ -90,12 +90,12 @@
 
     <!-- ===================== Modal: Lap phieu luong ===================== -->
     <template id="createSlipModal" data-modal-title="Lập phiếu lương">
-        <form method="post" class="modal-form" th:action="@{/payroll/slips/create}" th:object="${createForm}">
+        <form method="post" class="modal-form form-section" th:action="@{/payroll/slips/create}" th:object="${createForm}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="form-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
             <div class="form-group">
-                <label>Bác sĩ <span style="color:var(--error)">*</span></label>
+                <label>Bác sĩ <span class="req">*</span></label>
                 <select name="doctorId" class="form-control" required>
                     <option value="">-- Chọn bác sĩ --</option>
                     <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName}"
@@ -103,11 +103,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Năm <span style="color:var(--error)">*</span></label>
+                <label>Năm <span class="req">*</span></label>
                 <input type="number" name="payrollYear" class="form-control" min="2000" max="2100" th:value="*{payrollYear}" required/>
             </div>
             <div class="form-group">
-                <label>Tháng <span style="color:var(--error)">*</span></label>
+                <label>Tháng <span class="req">*</span></label>
                 <input type="number" name="payrollMonth" class="form-control" min="1" max="12" th:value="*{payrollMonth}" required/>
             </div>
 
