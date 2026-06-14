@@ -6,11 +6,23 @@
 
 **HỌC PHẦN: ĐÁNH GIÁ VÀ KIỂM ĐỊNH CHẤT LƯỢNG PHẦN MỀM**
 
-**DỰ ÁN PHÁT TRIỂN HỆ THỐNG QUẢN LÝ PHÒNG KHÁM**
+**DỰ ÁN PHÁT TRIỂN PHẦN MỀM QUẢN LÝ NHA KHOA**
 
 # TÀI LIỆU KIỂM THỬ
 
-**NHÓM:** Nội dung này sẽ được nhóm cập nhật sau
+**NHÓM: 07**
+
+<div align="center">
+
+**Nguyễn Nhật Minh - 23010847** (Trưởng nhóm)
+
+**Vũ Viết Tuấn - 23017097**
+
+**Phạm Ngọc Tiến - 23010010**
+
+**Phạm Văn Minh - 23010050**
+
+</div>
 
 **Tháng 6 năm 2026**
 
@@ -51,7 +63,10 @@
 
 | Thành viên | Lập trình | Kiểm thử | Báo cáo | Mức độ hoàn thành |
 | --- | --- | --- | --- | --- |
-| Nhóm cập nhật sau | Cập nhật sau | Cập nhật sau | Cập nhật sau | Cập nhật sau |
+| Nguyễn Nhật Minh (Trưởng nhóm) | UC1 - Quản lý hệ thống, cấu hình bảo mật | Thiết kế và chạy testcase UC1, smoke test, regression UC1 | Chương 1 kế hoạch kiểm thử, Chương 3 tổng hợp kết quả, tổng hợp báo cáo | 25% |
+| Vũ Viết Tuấn | UC2 - Quản lý lịch khám, lịch trực, bệnh nhân | Thiết kế và chạy testcase UC2, regression UC2 | Chương 2 testcase UC2 | 25% |
+| Phạm Ngọc Tiến | UC3 - Tiếp đón, khám bệnh, hóa đơn, doanh thu | Thiết kế và chạy testcase UC3, regression UC3 | Chương 2 testcase UC3, Chương 4 kiểm thử tự động | 25% |
+| Phạm Văn Minh | UC4 - Tính lương, báo cáo lương, xuất Excel | Thiết kế và chạy testcase UC4, regression UC4 | Chương 2 testcase UC4, Chương 5 kết luận | 25% |
 
 ## DANH MỤC HÌNH ẢNH
 
@@ -206,6 +221,15 @@ _Bảng 1-1 Bảng thuật ngữ các từ viết tắt_
 - Exit Test: Kiểm tra dữ liệu sau thao tác có được lưu đúng trạng thái, đúng quan hệ và đúng giá trị tính toán hay không.
 
 - Regression Test: Chạy lại các testcase liên quan sau khi sửa lỗi hoặc cập nhật mã nguồn, đặc biệt với các nghiệp vụ có nhiều ràng buộc như lịch khám, thanh toán và phiếu lương.
+
+```mermaid
+flowchart LR
+    A["Entrance Test\nXác minh môi trường,\ntài khoản, CSDL, build"] --> B["Main Test\nKiểm thử CRUD, luồng\nchức năng, phân quyền"]
+    B --> C["Exit Test\nKiểm tra trạng thái,\nquan hệ dữ liệu, tính toán"]
+    C --> D["Regression Test\nChạy lại testcase\nsau sửa lỗi"]
+    D -->|"Phát hiện lỗi"| B
+```
+
 
 ## 1.1.5. Referenced Documents
 
@@ -485,6 +509,15 @@ _Bảng 1-8 Bảng phân loại lỗi_
 | Đóng lỗi | Lỗi được đóng khi kết quả thực tế khớp với kết quả mong đợi |
 
 _Bảng 1-9 Bảng mô tả quy trình xử lý lỗi_
+
+```mermaid
+flowchart LR
+    A["Ghi nhận lỗi\n(Tester)"] --> B["Phân loại lỗi\n(Test Manager)"]
+    B --> C["Chuyển xử lý\n(Developer)"]
+    C --> D["Kiểm thử lại\n(Tester)"]
+    D -->|"Passed"| E["Đóng lỗi"]
+    D -->|"Failed"| C
+```
 
 # CHƯƠNG 2: XÂY DỰNG CÁC TESTCASE
 
@@ -846,6 +879,16 @@ _Hình 2-26 Testcase cho UC4.7. Báo cáo tiền lương tất cả bác sĩ tro
 ## 3.1. Tổng hợp kết quả kiểm thử
 
 Nhóm đã chạy kiểm thử thủ công thực tế đối với toàn bộ testcase trong file Excel `docs/testcase-he-thong-quan-ly-phong-kham.xlsx`. Tất cả testcase đều cho kết quả khớp với Expected Result, do đó được đặt trạng thái Passed. Bộ test tự động cũng đã được chạy riêng bằng Maven và được trình bày ở Chương 4.
+
+```mermaid
+pie title Phân bố testcase theo nhóm UC (Tổng: 253 TC)
+    "UC1 - Quản lý hệ thống (41)" : 41
+    "UC2 - Quản lý lịch khám (69)" : 69
+    "UC3 - Tiếp đón và khám bệnh (80)" : 80
+    "UC4 - Tính lương bác sĩ (63)" : 63
+```
+
+_Hình 3-1 Bảng tổng hợp kết quả kiểm thử_
 
 | Nhóm UC | Tổng số Test Case | Passed | Failed | Not Run | Not Completed | Tỉ lệ Passed (%) |
 | --- | --- | --- | --- | --- | --- | --- |

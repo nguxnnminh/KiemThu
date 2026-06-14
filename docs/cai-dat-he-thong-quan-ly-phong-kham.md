@@ -6,11 +6,23 @@
 
 **HỌC PHẦN: ĐÁNH GIÁ VÀ KIỂM ĐỊNH CHẤT LƯỢNG PHẦN MỀM**
 
-**DỰ ÁN PHÁT TRIỂN HỆ THỐNG QUẢN LÝ PHÒNG KHÁM**
+**DỰ ÁN PHÁT TRIỂN PHẦN MỀM QUẢN LÝ NHA KHOA**
 
 # TÀI LIỆU CÀI ĐẶT
 
-**Nhóm thực hiện:** Nội dung này sẽ được nhóm cập nhật sau
+**NHÓM: 07**
+
+<div align="center">
+
+**Nguyễn Nhật Minh - 23010847** (Trưởng nhóm)
+
+**Vũ Viết Tuấn - 23017097**
+
+**Phạm Ngọc Tiến - 23010010**
+
+**Phạm Văn Minh - 23010050**
+
+</div>
 
 **Tháng 6 năm 2026**
 
@@ -48,7 +60,10 @@
 
 | Thành viên | Lập trình | Kiểm thử | Báo cáo | Mức độ hoàn thành |
 | --- | --- | --- | --- | --- |
-| Nhóm cập nhật sau | Cập nhật sau | Cập nhật sau | Cập nhật sau | Cập nhật sau |
+| Nguyễn Nhật Minh (Trưởng nhóm) | UC1 - Quản lý hệ thống, cấu hình bảo mật, entity/config | Kiểm thử UC1, smoke test | Chương 1 tổng quan, Chương 2 thiết kế lớp, tổng hợp báo cáo | 25% |
+| Vũ Viết Tuấn | UC2 - Lịch khám, lịch trực, phòng/ghế, bệnh nhân | Kiểm thử UC2 | Chương 2 thiết kế CSDL, Chương 3 cài đặt UC2.5 | 25% |
+| Phạm Ngọc Tiến | UC3 - Tiếp đón, khám bệnh, hóa đơn, thanh toán, doanh thu | Kiểm thử UC3 | Chương 3 cài đặt UC3.6, UC3.7, kiến trúc hệ thống | 25% |
+| Phạm Văn Minh | UC4 - Tính lương, báo cáo lương, xuất Excel | Kiểm thử UC4 | Chương 3 cài đặt UC4.4, UC4.5-4.7, cấu trúc mã nguồn | 25% |
 
 ## DANH MỤC HÌNH ẢNH
 
@@ -90,6 +105,40 @@ Cuối cùng, hệ thống hỗ trợ tính lương bác sĩ. Người quản l�
 
 ## 1.2. Sơ đồ use case tổng quan
 
+```mermaid
+flowchart LR
+    Admin["Admin"]
+    Manager["Quản lý"]
+    Receptionist["Lễ tân"]
+    Doctor["Bác sĩ"]
+    Patient["Bệnh nhân"]
+
+    UC1["UC1. Quản lý hệ thống"]
+    UC2["UC2. Quản lý lịch khám"]
+    UC3["UC3. Tiếp đón và khám bệnh"]
+    UC4["UC4. Tính lương bác sĩ"]
+
+    Admin --> UC1
+    Admin --> UC2
+    Admin --> UC3
+    Admin --> UC4
+
+    Manager --> UC1
+    Manager --> UC2
+    Manager --> UC3
+    Manager --> UC4
+
+    Receptionist --> UC2
+    Receptionist --> UC3
+
+    Doctor --> UC2
+    Doctor --> UC3
+    Doctor --> UC4
+
+    Patient --> UC2
+    Patient --> UC3
+```
+
 _Hình 1-1 Sơ đồ use case tổng quan_
 
 Sơ đồ use-case trên mô tả các chức năng chính của hệ thống quản lý phòng khám, bao gồm quản lý hệ thống, quản lý lịch khám, tiếp đón và khám bệnh, tính lương bác sĩ. Các tác nhân tham gia gồm Admin, Quản lý, Lễ tân, Bác sĩ và Bệnh nhân.
@@ -114,6 +163,32 @@ Hệ thống quản lý phòng khám có các tác nhân và chức năng tươn
 
 ## 2.1.1. Program
 
+```mermaid
+classDiagram
+    class SmartDentalApplication {
+        +main(String[] args)
+    }
+    class SecurityConfig {
+        -UserDetailsServiceImpl userDetailsService
+        +passwordEncoder() PasswordEncoder
+        +filterChain(HttpSecurity) SecurityFilterChain
+    }
+    class JpaAuditingConfig {
+        <<Configuration>>
+    }
+    class WebMvcConfig {
+        +addInterceptors(InterceptorRegistry)
+    }
+    class EditFormFlashInterceptor {
+        +preHandle(HttpServletRequest, HttpServletResponse, Object) boolean
+    }
+
+    SmartDentalApplication ..> SecurityConfig : configures
+    SmartDentalApplication ..> JpaAuditingConfig : configures
+    SmartDentalApplication ..> WebMvcConfig : configures
+    WebMvcConfig --> EditFormFlashInterceptor : registers
+```
+
 _Hình 2-1 Sơ đồ lớp chính Program_
 
 - SmartDentalApplication: lớp khởi động ứng dụng Spring Boot, chứa hàm main và gọi SpringApplication để chạy hệ thống.
@@ -127,6 +202,189 @@ _Hình 2-1 Sơ đồ lớp chính Program_
 Các lớp Program và cấu hình này đóng vai trò nền tảng để ứng dụng có thể khởi động, tiếp nhận request từ trình duyệt và áp dụng các quy tắc bảo mật trước khi chuyển request tới controller nghiệp vụ.
 
 ## 2.1.2. Models
+
+```mermaid
+classDiagram
+    direction TB
+
+    class BaseEntity {
+        +Long id
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+    }
+
+    class User {
+        +String userCode
+        +String username
+        +String passwordHash
+        +String email
+        +Role role
+        +UserStatus status
+    }
+    class Employee {
+        +String employeeCode
+        +String fullName
+        +EmployeePosition position
+        +DoctorDegree degree
+        +EmployeeStatus status
+    }
+    class Patient {
+        +String patientCode
+        +String fullName
+        +String phone
+        +CommonStatus status
+    }
+
+    class ServiceCategory {
+        +String categoryCode
+        +String name
+        +CommonStatus status
+    }
+    class DentalService {
+        +String serviceCode
+        +String name
+        +ServiceUnit unit
+        +Integer durationMinutes
+    }
+    class ServicePrice {
+        +BigDecimal price
+        +LocalDate effectiveFrom
+        +PriceStatus status
+    }
+
+    class Holiday {
+        +String holidayCode
+        +LocalDate startDate
+        +LocalDate endDate
+        +HolidayType holidayType
+    }
+    class WorkShift {
+        +String shiftCode
+        +LocalTime startTime
+        +LocalTime endTime
+        +WorkShiftDayType dayType
+    }
+    class Room {
+        +String roomCode
+        +String name
+        +RoomStatus status
+    }
+    class Chair {
+        +String chairCode
+        +String name
+        +RoomStatus status
+    }
+    class DoctorShiftRegistration {
+        +String registrationCode
+        +LocalDate workDate
+        +DoctorShiftStatus status
+    }
+    class Appointment {
+        +String appointmentCode
+        +LocalDate appointmentDate
+        +AppointmentStatus status
+        +AppointmentSource source
+    }
+
+    class VisitCheckin {
+        +LocalDateTime checkinTime
+        +Integer queueNumber
+        +CheckinStatus status
+    }
+    class TreatmentSession {
+        +String sessionCode
+        +String diagnosis
+        +TreatmentSessionStatus status
+    }
+    class MedicalRecord {
+        +String recordCode
+    }
+    class RegisteredService {
+        +BigDecimal unitPrice
+        +Integer quantity
+        +BigDecimal totalAmount
+    }
+    class Invoice {
+        +String invoiceCode
+        +BigDecimal totalAmount
+        +BigDecimal finalAmount
+        +InvoiceStatus status
+    }
+    class Payment {
+        +BigDecimal amount
+        +PaymentMethod paymentMethod
+        +PaymentType paymentType
+    }
+
+    class PayrollSlip {
+        +String slipCode
+        +Integer payrollYear
+        +Integer payrollMonth
+        +BigDecimal totalSalary
+        +PayrollStatus status
+    }
+    class PayrollItem {
+        +BigDecimal totalHours
+        +BigDecimal convertedHours
+        +BigDecimal amount
+    }
+    class DoctorHourlyRate {
+        +BigDecimal hourlyRate
+        +LocalDate effectiveFrom
+        +HourlyRateStatus status
+    }
+    class ShiftCoefficient {
+        +BigDecimal coefficient
+        +LocalDate effectiveFrom
+    }
+    class ComplexCaseCoefficient {
+        +BigDecimal coefficient
+        +ApprovalStatus status
+    }
+
+    BaseEntity <|-- User
+    BaseEntity <|-- Employee
+    BaseEntity <|-- Patient
+    BaseEntity <|-- DentalService
+    BaseEntity <|-- ServiceCategory
+    BaseEntity <|-- ServicePrice
+    BaseEntity <|-- Appointment
+    BaseEntity <|-- TreatmentSession
+    BaseEntity <|-- Invoice
+    BaseEntity <|-- Payment
+    BaseEntity <|-- PayrollSlip
+    BaseEntity <|-- PayrollItem
+
+    User --> Employee : employee
+    User --> Patient : patient
+    DentalService --> ServiceCategory : category
+    ServicePrice --> DentalService : dentalService
+    Chair --> Room : room
+    DoctorShiftRegistration --> Employee : doctor
+    DoctorShiftRegistration --> WorkShift : workShift
+    Appointment --> Patient : patient
+    Appointment --> Employee : doctor
+    Appointment --> WorkShift : workShift
+    Appointment --> DoctorShiftRegistration : doctorShiftRegistration
+    VisitCheckin --> Appointment : appointment
+    TreatmentSession --> Appointment : appointment
+    TreatmentSession --> MedicalRecord : medicalRecord
+    TreatmentSession --> Patient : patient
+    TreatmentSession --> Employee : doctor
+    RegisteredService --> TreatmentSession : treatmentSession
+    RegisteredService --> DentalService : dentalService
+    RegisteredService --> ServicePrice : servicePrice
+    Invoice --> TreatmentSession : treatmentSession
+    Invoice --> Patient : patient
+    Payment --> Invoice : invoice
+    PayrollSlip --> Employee : doctor
+    PayrollItem --> PayrollSlip : payrollSlip
+    PayrollItem --> DoctorShiftRegistration : doctorShiftRegistration
+    ShiftCoefficient --> WorkShift : workShift
+    ComplexCaseCoefficient --> TreatmentSession : treatmentSession
+    ComplexCaseCoefficient --> Employee : doctor
+    MedicalRecord --> Patient : patient
+```
 
 _Hình 2-2 Sơ đồ lớp các Model và DTO_
 
@@ -146,6 +404,69 @@ _Hình 2-2 Sơ đồ lớp các Model và DTO_
 
 ## 2.1.3. Repositories
 
+```mermaid
+classDiagram
+    class JpaRepository {
+        <<interface>>
+    }
+
+    class UserRepository {
+        +findByUsername(String) Optional~User~
+        +findByEmail(String) Optional~User~
+        +searchByKeyword(String) List~User~
+    }
+    class EmployeeRepository {
+        +findByPhone(String) Optional~Employee~
+        +searchByKeyword(String) List~Employee~
+    }
+    class PatientRepository {
+        +findByPhone(String) Optional~Patient~
+        +searchByKeyword(String) List~Patient~
+    }
+    class AppointmentRepository {
+        +existsDoctorConflict(...) boolean
+        +existsChairConflict(...) boolean
+        +existsPatientConflictOnShift(...) boolean
+    }
+    class DoctorShiftRegistrationRepository {
+        +findConfirmedByDoctorDateAndShift(...) Optional
+    }
+    class VisitCheckinRepository {
+        +findByAppointmentAndActiveStatus(...) Optional
+    }
+    class TreatmentSessionRepository {
+        +findByAppointmentId(Long) Optional
+    }
+    class RegisteredServiceRepository {
+        +findByTreatmentSessionId(Long) List
+    }
+    class InvoiceRepository {
+        +findByTreatmentSessionId(Long) Optional
+    }
+    class PaymentRepository {
+        +findByPaidAtBetween(...) List~Payment~
+    }
+    class PayrollSlipRepository {
+        +findByDoctorIdAndPayrollYearAndPayrollMonth(...) Optional
+    }
+    class PayrollItemRepository {
+        +findByPayrollSlipId(Long) List
+    }
+
+    JpaRepository <|.. UserRepository
+    JpaRepository <|.. EmployeeRepository
+    JpaRepository <|.. PatientRepository
+    JpaRepository <|.. AppointmentRepository
+    JpaRepository <|.. DoctorShiftRegistrationRepository
+    JpaRepository <|.. VisitCheckinRepository
+    JpaRepository <|.. TreatmentSessionRepository
+    JpaRepository <|.. RegisteredServiceRepository
+    JpaRepository <|.. InvoiceRepository
+    JpaRepository <|.. PaymentRepository
+    JpaRepository <|.. PayrollSlipRepository
+    JpaRepository <|.. PayrollItemRepository
+```
+
 _Hình 2-3 Sơ đồ lớp Repository_
 
 Repository trong hệ thống là các interface kế thừa Spring Data JPA Repository. Các repository có nhiệm vụ thao tác với cơ sở dữ liệu, bao gồm tìm kiếm dữ liệu theo từ khóa, kiểm tra trùng dữ liệu, tìm theo trạng thái, tìm theo khoảng ngày và lấy dữ liệu phục vụ báo cáo.
@@ -153,6 +474,55 @@ Repository trong hệ thống là các interface kế thừa Spring Data JPA Rep
 Một số repository tiêu biểu gồm UserRepository, EmployeeRepository, PatientRepository, AppointmentRepository, DoctorShiftRegistrationRepository, VisitCheckinRepository, TreatmentSessionRepository, RegisteredServiceRepository, InvoiceRepository, PaymentRepository, PayrollSlipRepository và PayrollItemRepository. Trong đó, AppointmentRepository hỗ trợ kiểm tra trùng lịch bác sĩ, trùng ghế và lịch hẹn của bệnh nhân; PaymentRepository cung cấp dữ liệu cho báo cáo doanh thu; PayrollSlipRepository cung cấp dữ liệu cho báo cáo lương.
 
 ## 2.1.4. Controllers
+
+```mermaid
+flowchart TB
+    subgraph Auth_Dashboard["Auth / Dashboard"]
+        AuthController
+        DashboardController
+        ErrorPageController
+    end
+
+    subgraph System["Nhóm 1 - Quản lý hệ thống"]
+        UserManagementController
+        EmployeeManagementController
+        DentalServiceController
+        ServicePriceController
+    end
+
+    subgraph Schedule["Nhóm 2 - Quản lý lịch khám"]
+        HolidayController
+        WorkShiftController
+        RoomChairController
+        DoctorShiftController
+        AppointmentController
+        PatientManagementController
+    end
+
+    subgraph Clinical["Nhóm 3 - Tiếp đón và khám bệnh"]
+        CheckinController
+        QueueController
+        ExaminationController
+        DentalChartController
+        RegisteredServiceController
+        InvoiceController
+        MedicalRecordController
+        RevenueReportController
+    end
+
+    subgraph Payroll["Nhóm 4 - Tính lương bác sĩ"]
+        DoctorHourlyRateController
+        ShiftCoefficientController
+        ComplexCaseCoefficientController
+        PayrollSlipController
+        PayrollReportController
+        DoctorPayrollController
+    end
+
+    subgraph PatientPortal["Khu vực bệnh nhân"]
+        PatientPortalController
+    end
+```
 
 _Hình 2-4 Sơ đồ các lớp Controller_
 
@@ -165,6 +535,271 @@ Ngoài ra, PatientPortalController cung cấp các màn hình dành cho bệnh n
 ## 2.2. Thiết kế cơ sở dữ liệu
 
 _Hình 2-5 Lược đồ cơ sở dữ liệu_
+
+```mermaid
+erDiagram
+    users ||--o| employees : "employee_id"
+    users ||--o| patients : "patient_id"
+
+    employees ||--o{ doctor_shift_registrations : "doctor_id"
+    employees ||--o{ appointments : "doctor_id"
+    employees ||--o{ treatment_sessions : "doctor_id"
+    employees ||--o{ payroll_slips : "doctor_id"
+    employees ||--o{ complex_case_coefficients : "doctor_id"
+    employees ||--o{ doctor_hourly_rates : "doctor_id (nullable)"
+
+    patients ||--o{ appointments : "patient_id"
+    patients ||--o{ treatment_sessions : "patient_id"
+    patients ||--o{ invoices : "patient_id"
+    patients ||--o{ medical_records : "patient_id"
+    patients ||--o{ dental_tooth_status : "patient_id"
+
+    service_categories ||--o{ services : "category_id"
+    services ||--o{ service_prices : "service_id"
+    services ||--o{ registered_services : "service_id"
+
+    rooms ||--o{ chairs : "room_id"
+    rooms ||--o{ doctor_shift_registrations : "room_id"
+    rooms ||--o{ appointments : "room_id"
+
+    chairs ||--o{ doctor_shift_registrations : "chair_id"
+    chairs ||--o{ appointments : "chair_id"
+
+    work_shifts ||--o{ doctor_shift_registrations : "work_shift_id"
+    work_shifts ||--o{ appointments : "work_shift_id"
+    work_shifts ||--o{ shift_coefficients : "work_shift_id"
+
+    doctor_shift_registrations ||--o{ appointments : "doctor_shift_registration_id"
+    doctor_shift_registrations ||--o{ payroll_items : "doctor_shift_registration_id"
+
+    appointments ||--o{ appointment_status_logs : "appointment_id"
+    appointments ||--o| visit_checkins : "appointment_id"
+    appointments ||--o| treatment_sessions : "appointment_id"
+
+    treatment_sessions ||--o{ registered_services : "treatment_session_id"
+    treatment_sessions ||--o| invoices : "treatment_session_id"
+    treatment_sessions ||--o| medical_records : "treatment_session_id"
+    treatment_sessions ||--o{ complex_case_coefficients : "treatment_session_id"
+
+    registered_services }o--|| service_prices : "service_price_id"
+
+    invoices ||--o{ payments : "invoice_id"
+
+    payroll_slips ||--o{ payroll_items : "payroll_slip_id"
+
+    dental_tooth_status ||--o{ tooth_treatment_histories : "tooth_status_id"
+
+    users {
+        bigint id PK
+        varchar user_code UK
+        varchar username UK
+        varchar email
+        enum role
+        enum status
+    }
+    employees {
+        bigint id PK
+        varchar employee_code UK
+        varchar full_name
+        enum position
+        enum degree
+        enum status
+    }
+    patients {
+        bigint id PK
+        varchar patient_code UK
+        varchar full_name
+        varchar phone UK
+        enum status
+    }
+    service_categories {
+        bigint id PK
+        varchar category_code UK
+        varchar name
+        enum status
+    }
+    services {
+        bigint id PK
+        varchar service_code UK
+        varchar name
+        enum unit
+        bigint category_id FK
+    }
+    service_prices {
+        bigint id PK
+        decimal price
+        date effective_from
+        enum status
+        bigint service_id FK
+    }
+    holidays {
+        bigint id PK
+        varchar holiday_code UK
+        date start_date
+        date end_date
+        enum holiday_type
+    }
+    work_shifts {
+        bigint id PK
+        varchar shift_code UK
+        time start_time
+        time end_time
+        enum day_type
+        int max_appointments
+    }
+    rooms {
+        bigint id PK
+        varchar room_code UK
+        varchar name
+        enum status
+    }
+    chairs {
+        bigint id PK
+        varchar chair_code UK
+        varchar name
+        bigint room_id FK
+        enum status
+    }
+    doctor_shift_registrations {
+        bigint id PK
+        varchar registration_code UK
+        date work_date
+        enum status
+        bigint doctor_id FK
+        bigint work_shift_id FK
+        bigint room_id FK
+        bigint chair_id FK
+    }
+    appointments {
+        bigint id PK
+        varchar appointment_code UK
+        date appointment_date
+        time start_time
+        time end_time
+        enum status
+        enum source
+        bigint patient_id FK
+        bigint doctor_id FK
+        bigint work_shift_id FK
+    }
+    visit_checkins {
+        bigint id PK
+        datetime checkin_time
+        int queue_number
+        enum status
+        bigint appointment_id FK
+    }
+    treatment_sessions {
+        bigint id PK
+        varchar session_code UK
+        text diagnosis
+        enum status
+        bigint appointment_id FK
+        bigint patient_id FK
+        bigint doctor_id FK
+    }
+    medical_records {
+        bigint id PK
+        varchar record_code UK
+        bigint patient_id FK
+        bigint treatment_session_id FK
+    }
+    registered_services {
+        bigint id PK
+        decimal unit_price
+        int quantity
+        decimal total_amount
+        enum status
+        bigint treatment_session_id FK
+        bigint service_id FK
+        bigint service_price_id FK
+    }
+    invoices {
+        bigint id PK
+        varchar invoice_code UK
+        decimal total_amount
+        decimal discount_amount
+        decimal final_amount
+        decimal paid_amount
+        decimal remaining_amount
+        enum status
+        bigint treatment_session_id FK
+        bigint patient_id FK
+    }
+    payments {
+        bigint id PK
+        decimal amount
+        enum payment_method
+        enum payment_type
+        enum status
+        datetime paid_at
+        bigint invoice_id FK
+    }
+    payroll_slips {
+        bigint id PK
+        varchar slip_code UK
+        int payroll_year
+        int payroll_month
+        decimal total_salary
+        enum status
+        bigint doctor_id FK
+    }
+    payroll_items {
+        bigint id PK
+        decimal total_hours
+        decimal converted_hours
+        decimal amount
+        bigint payroll_slip_id FK
+        bigint doctor_shift_registration_id FK
+    }
+    doctor_hourly_rates {
+        bigint id PK
+        decimal hourly_rate
+        date effective_from
+        enum status
+    }
+    shift_coefficients {
+        bigint id PK
+        decimal coefficient
+        date effective_from
+        bigint work_shift_id FK
+    }
+    complex_case_coefficients {
+        bigint id PK
+        decimal coefficient
+        enum status
+        bigint treatment_session_id FK
+        bigint doctor_id FK
+    }
+    dental_tooth_status {
+        bigint id PK
+        int tooth_number
+        enum tooth_status
+        bigint patient_id FK
+    }
+    tooth_treatment_histories {
+        bigint id PK
+        bigint tooth_status_id FK
+        bigint treatment_session_id FK
+    }
+    appointment_status_logs {
+        bigint id PK
+        enum old_status
+        enum new_status
+        bigint appointment_id FK
+    }
+    code_sequences {
+        bigint id PK
+        varchar prefix UK
+        bigint current_value
+    }
+    audit_logs {
+        bigint id PK
+        varchar action
+        varchar entity_type
+    }
+```
+
 
 Cơ sở dữ liệu của hệ thống được quản lý bằng Flyway migration và lưu trên MySQL. Các bảng được chia theo các nhóm nghiệp vụ chính:
 
@@ -187,6 +822,38 @@ Nhìn chung, thiết kế cơ sở dữ liệu đi theo hướng quản lý tậ
 ## 3.1.1. Kiến trúc chung của hệ thống
 
 _Hình 3-1 Mô hình kiến trúc chung của hệ thống_
+
+```mermaid
+flowchart TB
+    subgraph Client["Client - Trình duyệt web"]
+        Browser["HTML / CSS / JS"]
+    end
+
+    subgraph WebServer["Web Server - Spring Boot MVC"]
+        direction TB
+        Security["Spring Security\n- Đăng nhập form\n- Phân quyền URL theo Role\n- BCrypt"]
+        Controller["Controller Layer\n- Tiếp nhận request\n- Bind form data\n- Trả Thymeleaf template"]
+        Service["Service Layer\n- Xử lý nghiệp vụ\n- Kiểm tra ràng buộc\n- Quản lý trạng thái"]
+        Repository["Repository Layer\n- Spring Data JPA\n- Truy vấn CRUD\n- Query tùy chỉnh"]
+        Template["Thymeleaf Templates\n- Render HTML phía server"]
+
+        Security --> Controller
+        Controller --> Service
+        Service --> Repository
+        Controller --> Template
+    end
+
+    subgraph DBServer["Database Server"]
+        MySQL["MySQL Database"]
+        Flyway["Flyway Migration\n- V1 đến V9"]
+        Flyway --> MySQL
+    end
+
+    Browser -- "HTTP Request" --> Security
+    Template -- "HTML Response" --> Browser
+    Repository -- "JDBC / JPA" --> MySQL
+```
+
 
 ## Vai trò của từng thành phần:
 
@@ -286,6 +953,32 @@ Trong mã nguồn hiện có các test hồi quy theo từng phase, smoke test, 
 
 _Hình 3-2 Cấu trúc mã nguồn tổng quan_
 
+```mermaid
+flowchart TB
+    Root["PhongKham/"]
+    Root --> POM["pom.xml"]
+    Root --> SRC["src/"]
+    SRC --> MAIN["main/"]
+    SRC --> TEST["test/"]
+    MAIN --> JAVA["java/com/smartdental/"]
+    MAIN --> RES["resources/"]
+    JAVA --> CONFIG["config/"]
+    JAVA --> CONTROLLER["controller/"]
+    JAVA --> SERVICE["service/"]
+    JAVA --> REPO["repository/"]
+    JAVA --> ENTITY["entity/"]
+    JAVA --> DTO["dto/ & dto/form/"]
+    JAVA --> ENUMS["enums/"]
+    JAVA --> SEC["security/"]
+    JAVA --> EXCEP["exception/"]
+    JAVA --> UTIL["util/"]
+    RES --> TMPL["templates/"]
+    RES --> STATIC["static/"]
+    RES --> MIGR["db/migration/"]
+    TEST --> TESTJAVA["java/com/smartdental/"]
+    Root --> DOCS["docs/"]
+```
+
 Dự án được tổ chức theo cấu trúc chuẩn của Spring Boot:
 
 - pom.xml: file cấu hình Maven, khai báo phiên bản Spring Boot, Java và các dependency.
@@ -303,6 +996,24 @@ Dự án được tổ chức theo cấu trúc chuẩn của Spring Boot:
 ## 3.2.1. Client
 
 _Hình 3-3 Cấu trúc file trong Client_
+
+```mermaid
+flowchart TB
+    TMPL["resources/templates/"]
+    TMPL --> LAYOUT["layout/ - layout chung, header, sidebar"]
+    TMPL --> AUTH["auth/ - màn hình đăng nhập"]
+    TMPL --> DASH["dashboard/ - trang tổng quan"]
+    TMPL --> SYS["system/ - người dùng, nhân viên, dịch vụ, bảng giá"]
+    TMPL --> SCHED["schedule/ - ngày nghỉ, ca, phòng/ghế, lịch trực, lịch khám, bệnh nhân"]
+    TMPL --> CLIN["clinical/ - check-in, hàng đợi, khám, sơ đồ răng, dịch vụ, hóa đơn, doanh thu"]
+    TMPL --> PAY["payroll/ - tiền giờ, hệ số ca, hệ số phức tạp, phiếu lương, báo cáo"]
+    TMPL --> PAT["patient/ - đặt lịch, lịch hẹn, lịch sử điều trị, hóa đơn bệnh nhân"]
+    TMPL --> ERR["error/ - trang lỗi 403, 404, 500"]
+
+    STAT["resources/static/"]
+    STAT --> CSS["css/ - style.css, invoice-print.css"]
+    STAT --> JS["js/ - modal.js, calendar.js, tương tác UI"]
+```
 
 Phần client của hệ thống nằm trong resources/templates và resources/static:
 
@@ -329,6 +1040,31 @@ Phần client của hệ thống nằm trong resources/templates và resources/s
 ## 3.2.2. Server
 
 _Hình 3-4 Cấu trúc file trong Server_
+
+```mermaid
+flowchart TB
+    PKG["com.smartdental"]
+    PKG --> SmartDental["SmartDentalApplication.java"]
+    PKG --> CFG["config/ - SecurityConfig, JpaAuditingConfig, WebMvcConfig, EditFormFlashInterceptor"]
+    PKG --> CTRL["controller/ - 26 controller classes"]
+    PKG --> SVC["service/ - AppointmentService, InvoiceService, PayrollService..."]
+    PKG --> REPO["repository/ - 22 JPA repository interfaces"]
+    PKG --> ENT["entity/ - 29 entity classes + BaseEntity"]
+    PKG --> DTOP["dto/ - RevenueDTO, PayrollDTO..."]
+    PKG --> FORM["dto/form/ - 28 form classes"]
+    PKG --> ENUM["enums/ - Role, UserStatus, AppointmentStatus..."]
+    PKG --> SECU["security/ - CustomUserDetails, UserDetailsServiceImpl"]
+    PKG --> EXC["exception/ - BusinessException, GlobalExceptionHandler"]
+    PKG --> UTL["util/ - GridLayoutUtil"]
+
+    MIG["resources/db/migration/"]
+    MIG --> V1["V1 - Core tables"]
+    MIG --> V2["V2 - System management"]
+    MIG --> V3["V3 - Schedule"]
+    MIG --> V4["V4 - Clinical"]
+    MIG --> V5["V5 - Payroll"]
+    MIG --> V6["V6-V9 - Enhancements"]
+```
 
 Phần server nằm trong package com.smartdental:
 
@@ -357,6 +1093,23 @@ Phần server nằm trong package com.smartdental:
 ## 3.2.3. Tests
 
 _Hình 3-5 Cấu trúc file trong Tests_
+
+```mermaid
+flowchart TB
+    TEST["src/test/java/com/smartdental/"]
+    TEST --> SMOKE["SmokeTest - khởi động, login, dashboard"]
+    TEST --> P1["Phase1RegressionTest - UC1"]
+    TEST --> P2["Phase2RegressionTest - UC2"]
+    TEST --> P3["Phase3RegressionTest - UC3"]
+    TEST --> P4["Phase4RegressionTest - UC4"]
+    TEST --> P5["Phase5HardeningTest - tích hợp"]
+    TEST --> P6["Phase6FullUseCaseCoverageTest - bổ sung luồng"]
+    TEST --> DPR["DetailPageRenderTest - render chi tiết"]
+    TEST --> EXS["ExaminationServiceTest - service khám bệnh"]
+    TEST --> INV["InvoiceServiceTest - service hóa đơn"]
+    TEST --> CCC["ComplexCaseCoefficientServiceTest - hệ số phức tạp"]
+    TEST --> GLU["GridLayoutUtilTest - bố cục lịch"]
+```
 
 Thư mục src/test/java chứa các kiểm thử tự động của hệ thống. Các test chính gồm SmokeTest để kiểm tra ứng dụng khởi động, các PhaseRegressionTest để kiểm thử hồi quy theo từng nhóm chức năng, Phase6FullUseCaseCoverageTest để kiểm tra bổ sung các luồng use case trọng điểm, DetailPageRenderTest để kiểm tra render một số màn hình chi tiết, GridLayoutUtilTest để kiểm tra tiện ích bố cục lịch và các service test như ExaminationServiceTest, InvoiceServiceTest, ComplexCaseCoefficientServiceTest.
 
